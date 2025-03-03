@@ -26,8 +26,8 @@ BEM_Project/
 ### **1️⃣ Clone the Repository**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/BEM_Project.git
-cd BEM_Project
+git clone https://github.com/matteo-gotti/rotor-wake-assignment1.git
+cd rotor-wake-assignment1
 ```
 
 ### **2️⃣ Set Up the Virtual Environment**
