@@ -2,6 +2,7 @@
 from BEM_functions import *
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 """
 TODO:
@@ -34,7 +35,7 @@ root_location_over_R = 0.2
 tip_location_over_R = 1
 delta_r_over_R = 0.01
 r_over_R = np.arange(root_location_over_R, tip_location_over_R, delta_r_over_R)
-airfoil = 'DU95W180.cvs'
+airfoil_data_path = os.path.join(os.path.dirname(__file__), "..", "data", "DU95W180.cvs")
 
 # blade shape
 pitch = -2  # degrees
@@ -76,7 +77,7 @@ plt.legend()
 plt.show()
 
 #----Import polar data--------------------------------------------------------------------------------------
-data1 = pd.read_csv(airfoil, header=0, names=["alfa", "cl", "cd", "cm"], sep='\s+')
+data1 = pd.read_csv(airfoil_data_path, header=0, names=["alfa", "cl", "cd", "cm"], sep='\s+')
 polar_alpha = data1['alfa'][:]
 polar_cl = data1['cl'][:]
 polar_cd = data1['cd'][:]
