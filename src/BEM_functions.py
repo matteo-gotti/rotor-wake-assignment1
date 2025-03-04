@@ -1,30 +1,45 @@
 # import necessary libraries
 import numpy as np
 import math
+from mpmath import sec
 
-def compute_c_t(a, glauert=False):
+def compute_c_t(a, apply_glauert_correction=False):
     """
     This function calculates the thrust coefficient as a function of induction factor 'a'
     'glauert' defines if the Glauert correction for heavily loaded rotors should be used; default value is false
     """
     c_t = 4 * a * (1 - a)
-    if glauert:
+    if apply_glauert_correction:
         CT1 = 1.816
         a1 = 1 - np.sqrt(CT1) / 2
         c_t[a > a1] = CT1 - 4 * (np.sqrt(CT1) - 1) * (1 - a[a > a1])
 
     return c_t
 
-def compute_axial_induction(CT):
+def compute_c_t_yawed(a, yaw_angle, wake_skew_angle):
+    """
+    This function calculates the thrust coefficient as a function of induction factor 'a', according to vortex theory
+    """
+    c_t = 4*a*(math.cos(yaw_angle) + math.tan(wake_skew_angle/2)*math.sin(yaw_angle) - a*sec(wake_skew_angle/2)**2)
+    return c_t
+
+def compute_c_p_yawed(a, yaw_angle, wake_skew_angle):
+    """
+    This function calculates the power coefficient as a function of induction factor 'a', according to vortex theory
+    """
+    c_p = 4*a*(math.cos(yaw_angle) + math.tan(wake_skew_angle/2)*math.sin(yaw_angle) - a*sec(wake_skew_angle/2)**2)*(math.cos(yaw_angle) - a)
+    return c_p
+
+def compute_axial_induction(c_t):
     """
     This function calculates the induction factor 'a' as a function of thrust coefficient CT
     including Glauert's correction
     """
-    a = np.zeros(np.shape(CT))
+    a = np.zeros(np.shape(c_t))
     CT1 = 1.816
     CT2 = 2 * np.sqrt(CT1) - CT1
-    a[CT >= CT2] = 1 + (CT[CT >= CT2] - CT1) / (4 * (np.sqrt(CT1) - 1))
-    a[CT < CT2] = 0.5 - 0.5 * np.sqrt(1 - CT[CT < CT2])
+    a[c_t >= CT2] = 1 + (c_t[c_t >= CT2] - CT1) / (4 * (np.sqrt(CT1) - 1))
+    a[c_t < CT2] = 0.5 - 0.5 * np.sqrt(1 - c_t[c_t < CT2])
     return a
 
 def prandtl_tip_root_correction(r_R, root_radius_over_R, tip_radius_over_R, tip_speed_ratio, blades_number, axial_induction):
