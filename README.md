@@ -34,7 +34,7 @@ cd rotor-wake-assignment1
 
 ```bash
 python -m venv venv
-venv\Scripts\activate
+source .venv/Scripts/activate
 ```
 
 ### **3️⃣ Install Dependencies**
