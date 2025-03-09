@@ -1,5 +1,6 @@
 # Import necessary libraries and functions
 from BEM_functions import *
+from BEM_plots import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -12,7 +13,7 @@ TODO:
     in order to maximise the Cp in axial flow at tip speed ratio 8 (eight). You can choose your 
     own design approach. Compare with the expected result from actuator disk theory. 
     Discuss the rationale for your design, including the twist and chord distributions.
-4. Plots with explanation of results (alpha/inflow/a/a’/Ct/Cn/Cq vs r/R)
+4. Plots with explanation of results (alpha/inflow/a/a'/Ct/Cn/Cq vs r/R)
         - Span-wise distribution of angle of attack and inflow angle
         - Span-wise distribution of axial and azimuthal inductions
         - Span-wise distribution of thrust and azimuthal loading
@@ -44,56 +45,24 @@ twist_distribution = 14 * (1 - r_over_R) + pitch  # degrees
 
 # ----Define flow conditions--------------------------------------------------------------------------------
 u_inf = 10  # unperturbed wind speed in m/s
-tip_speed_ratio = 8  # tip speed ratio
+tip_speed_ratios = np.array([6, 8, 10], dtype = float)  # tip speed ratio
 rotor_radius = 50
-Omega = u_inf * tip_speed_ratio / rotor_radius
+Omega = u_inf * tip_speed_ratios / rotor_radius
 
 # ----Plot induction factor to show Glauert correction------------------------------------------------------
-a = np.arange(0.0, 1.0, 0.01)
-c_t_uncorrected = compute_c_t(a)  # CT without correction
-c_t_glauert = compute_c_t(a, True)  # CT with Glauert's correction
-
-fig1 = plt.figure(figsize=(12, 6))
-plt.plot(a, c_t_uncorrected, 'k-', label='$C_T$')
-plt.plot(a, c_t_glauert, 'b--', label='$C_T$ Glauert')
-plt.plot(a, c_t_glauert * (1 - a), 'g--', label='$C_P$ Glauert')
-plt.xlabel('a')
-plt.ylabel(r'$C_T$ and $C_P$')
-plt.grid()
-plt.legend()
-plt.show()
+fig_glauert = plot_glauert_correction()
 
 #----Applying Prandtl tip-speed correction------------------------------------------------------------------
-a = np.zeros(np.shape(r_over_R)) + 0.3
-prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
-    r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratio, n_blades, a)
-
-fig2 = plt.figure(figsize=(12, 6))
-plt.plot(r_over_R, prandtl, 'r-', label='Prandtl')
-plt.plot(r_over_R, prandtl_tip, 'g.', label='Prandtl tip')
-plt.plot(r_over_R, prandtl_root, 'b.', label='Prandtl root')
-plt.xlabel('r/R')
-plt.legend()
-plt.show()
+fig_prandtl = plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios, n_blades)
 
 #----Import polar data--------------------------------------------------------------------------------------
-data1 = pd.read_csv(airfoil_data_path, header=0, names=["alfa", "cl", "cd", "cm"], sep='\s+')
-polar_alpha = data1['alfa'][:]
-polar_cl = data1['cl'][:]
-polar_cd = data1['cd'][:]
+polar_data = pd.read_csv(airfoil_data_path, header=0, names=["alfa", "cl", "cd", "cm"], sep='\s+')
+polar_alpha = polar_data['alfa'][:]
+polar_cl = polar_data['cl'][:]
+polar_cd = polar_data['cd'][:]
 
 # -----Plot polars of the airfoil C-alfa and Cl-Cd----------------------------------------------------------
-fig, axs = plt.subplots(1, 2, figsize=(12, 6))
-axs[0].plot(polar_alpha, polar_cl)
-axs[0].set_xlim([-30, 30])
-axs[0].set_xlabel(r'$\alpha$')
-axs[0].set_ylabel(r'$C_l$')
-axs[0].grid()
-axs[1].plot(polar_cd, polar_cl)
-axs[1].set_xlim([0, .1])
-axs[1].set_xlabel(r'$C_d$')
-axs[1].grid()
-plt.show()
+fig_polar = plot_polar_data(polar_alpha, polar_cl, polar_cd)
 
 # -----Solve BEM model--------------------------------------------------------------------------------------
 results = np.zeros([len(r_over_R) - 1, 6])
@@ -107,9 +76,6 @@ areas = (r_over_R[1:] ** 2 - r_over_R[:-1] ** 2) * np.pi * rotor_radius ** 2
 dr = (r_over_R[1:] - r_over_R[:-1]) * rotor_radius
 CT = np.sum(dr * results[:, 3] * n_blades / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
 CP = np.sum(dr * results[:, 4] * results[:, 2] * n_blades * rotor_radius * Omega / (0.5 * u_inf ** 3 * np.pi * rotor_radius ** 2))
-
-print("CT is ", CT)
-print("CP is ", CP)
 
 fig3 = plt.figure(figsize=(12, 6))
 plt.title('Axial and tangential induction')
