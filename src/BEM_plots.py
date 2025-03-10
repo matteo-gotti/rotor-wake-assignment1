@@ -22,20 +22,24 @@ def plot_glauert_correction():
 
 def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratio, n_blades):
      a = np.zeros(np.shape(r_over_R)) + 0.3
-     n_tsr = len(tip_speed_ratio)
-     colormap = cm.get_cmap('viridis', n_tsr)
+     n_tsr = 1 if type(tip_speed_ratio) is np.float64 else len(tip_speed_ratio)
+     colormap = cm.get_cmap('turbo', n_tsr)
      fig = plt.figure(figsize=(12, 6))
      
-     for i, tsr in enumerate(tip_speed_ratio):
-          prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
-               r_over_R, root_location_over_R, tip_location_over_R, tsr, n_blades, a)
-          color = colormap(i)
-          plt.plot(r_over_R, prandtl, color=color, label=f'Prandtl TSR={tsr}')
-
      if n_tsr == 1:
+          prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
+               r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratio, n_blades, a)
           plt.plot(r_over_R, prandtl_tip, 'g.', label='Prandtl tip')
           plt.plot(r_over_R, prandtl_root, 'b.', label='Prandtl root')
-     
+          color = colormap(0)
+          plt.plot(r_over_R, prandtl, color=color, label=f'Prandtl TSR={tip_speed_ratio}')
+     else : 
+          for i, tsr in enumerate(tip_speed_ratio):
+               prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
+                    r_over_R, root_location_over_R, tip_location_over_R, tsr, n_blades, a)
+               color = colormap(i)
+               plt.plot(r_over_R, prandtl, color=color, label=f'Prandtl TSR={tsr}')
+     plt.grid()
      plt.xlabel('r/R')
      plt.legend()
      plt.show()
