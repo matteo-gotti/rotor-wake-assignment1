@@ -30,89 +30,92 @@ TODO:
     of vorticity in relation to the loading and circulation over the blade.
 """
 
-# ------Define the blade geometry---------------------------------------------------------------------------
-n_blades = 3
+# ------Define the blade geometry-----------------------------------------------------------------------------
+n_blades = 3  # number of blades [-]
+# location of the blade root divided by blade radius [-]
 root_location_over_R = 0.2
+# location of the blade tip divided by blade radius [-]
 tip_location_over_R = 1
-delta_r_over_R = 0.01
-r_over_R = np.arange(root_location_over_R, tip_location_over_R + delta_r_over_R, delta_r_over_R)
+delta_r_over_R = 0.01  # length of each annulus divided by blade radius [-]
+r_over_R = np.arange(root_location_over_R, tip_location_over_R + delta_r_over_R/2,
+                     delta_r_over_R)  # location of each annulus divided by blade radius [-]
 airfoil_data_path = os.path.join(os.path.dirname(__file__), "..", "data", "DU95W180.cvs")
-delta_psi = 0.01
-psi_vec = np.arange(0, 2 * np.pi, delta_psi)
+delta_psi = 0.01  # azimuthal discretization step [rad]
+psi_vec = np.arange(0, 2 * np.pi, delta_psi)  # azimuthal discretization [rad]
 
 # blade shape
-pitch = -2  # degrees
-chord_distribution = 3 * (1 - r_over_R) + 1  # meters
-twist_distribution = 14 * (1 - r_over_R) + pitch  # degrees
+pitch = -2  # pitch angle [deg]
+chord_distribution = 3 * (1 - r_over_R) + 1  # chord at each annulus [m]
+twist_distribution = 14 * (1 - r_over_R) + pitch  # twist at each annulus [deg]
 
-# ----Define flow conditions--------------------------------------------------------------------------------
-u_inf = 10  # unperturbed wind speed in m/s
-tip_speed_ratios = np.array([6, 8, 10], dtype = float)  # tip speed ratio
-rotor_radius = 50
-yaw_angles = np.array([0, 15, 30], dtype=float)
-Omega = u_inf * tip_speed_ratios / rotor_radius
+# ----Define flow conditions----------------------------------------------------------------------------------
+u_inf = 10    # unperturbed wind speed [m/s]
+tip_speed_ratios = np.array([6, 8, 10], dtype=float)  # tip speed ratio [-]
+rotor_radius = 50  # rotor radius [m]
+yaw_angles = np.array([0, 15, 30], dtype=float)  # yaw angle [deg]
+Omega = u_inf * tip_speed_ratios / rotor_radius  # rotor rotation speed [rad/s]
 
-# ----Plot induction factor to show Glauert correction------------------------------------------------------
+# ----Check the validity of the input data--------------------------------------------------------------------
+if not (any(x == 8 for x in tip_speed_ratios)):
+    raise Exception(
+        "The tip speed ratio 8 is not in the list of tip speed ratios")
+
+if not (any(x == 0 for x in yaw_angles)):
+    raise Exception("The yaw angle 0 is not in the list of yaw angles")
+
+# ----Plot induction factor to show Glauert correction--------------------------------------------------------
 fig_glauert = plot_glauert_correction()
 
-#----Applying Prandtl tip-speed correction------------------------------------------------------------------
-fig_prandtl_one_tsr = plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios[1], n_blades)
-fig_prandtl = plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios, n_blades)
+# ----Applying Prandtl tip-speed correction-------------------------------------------------------------------
+fig_prandtl_single_tsr = plot_prandtl_correction(
+    r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios[1], n_blades)
+fig_prandtl = plot_prandtl_correction(
+    r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios, n_blades)
 
-#----Import polar data--------------------------------------------------------------------------------------
-polar_data = pd.read_csv(airfoil_data_path, header=0, names=["alfa", "cl", "cd", "cm"], sep='\s+')
+# ----Import polar data---------------------------------------------------------------------------------------
+polar_data = pd.read_csv(airfoil_data_path, header=0, names=[
+                         "alfa", "cl", "cd", "cm"], sep='\s+')
 polar_alpha = polar_data['alfa'][:]
 polar_cl = polar_data['cl'][:]
 polar_cd = polar_data['cd'][:]
 
-# -----Plot polars of the airfoil C-alfa and Cl-Cd----------------------------------------------------------
+# -----Plot polars of the airfoil C-alfa and Cl-Cd------------------------------------------------------------
 fig_polar = plot_polar_data(polar_alpha, polar_cl, polar_cd)
 
-# -----Solve BEM model for non yawed case-------------------------------------------------------------------
+# -----Solve BEM model for each requested case (corrected)----------------------------------------------------------------
 results_corrected = {}
-dr = (r_over_R[1:] - r_over_R[:-1]) * rotor_radius
 for yaw_angle in yaw_angles:
-    psi_vector = psi_vec if yaw_angle != 0 else [] 
-    
+    psi_vector = psi_vec if yaw_angle != 0 else []
+
     for j, tip_speed_ratio in enumerate(tip_speed_ratios):
         if yaw_angle != 0 and tip_speed_ratio != 8:
             continue
-        
-        for i in range(len(r_over_R) - 1):
-            chord = np.interp((r_over_R[i] + r_over_R[i + 1]) / 2, r_over_R, chord_distribution)
-            twist = np.interp((r_over_R[i] + r_over_R[i + 1]) / 2, r_over_R, twist_distribution)
-            current_results_corrected = solve_stream_tube(u_inf, r_over_R[i], r_over_R[i + 1], root_location_over_R, tip_location_over_R,
-                                      Omega[j], rotor_radius, n_blades, chord, twist, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, psi_vector)
-            results_corrected[f'yaw_{yaw_angle}_TSR_{tip_speed_ratio}']= current_results_corrected
+        key = f'yaw_{yaw_angle}_TSR_{tip_speed_ratio}'
+        results_corrected[key] = BEM_cycle(
+            u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[j], rotor_radius, n_blades,
+            chord_distribution, twist_distribution, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, psi_vector)
 
-areas = (r_over_R[1:] ** 2 - r_over_R[:-1] ** 2) * np.pi * rotor_radius ** 2
-# CT = np.sum(dr * results[:, 3, j] * n_blades / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
-# CP = np.sum(dr * results[:, 4, j] * results[:, 2, j] * n_blades * rotor_radius * Omega[j]/ (0.5 * u_inf ** 3 * np.pi * rotor_radius ** 2))
+# areas = (r_over_R[1:] ** 2 - r_over_R[:-1] ** 2) * np.pi * rotor_radius ** 2
+non_yawed_keys = [key for key in results_corrected.keys() if 'yaw_0.0' in key]
+yawed_keys = [key for key in results_corrected.keys() if 'yaw_0.0' not in key]
 
-# -----Solve BEM model yawed case-------------------------------------------------------------------
+# -----Compute CT, CP, CQ for non yawed corrected case------------------------------------------------------------------
+non_yawed_corrected_results = {key: results_corrected[key] for key in non_yawed_keys}
+CT_corr = {}
+CP_corr = {}
+CQ_corr = {}
+dr = (r_over_R[1:] - r_over_R[:-1]) * rotor_radius
+for j, tip_speed_ratio in enumerate(tip_speed_ratios):
+    key = non_yawed_keys[j]
+    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] *
+                          n_blades / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
+    CP_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * results_corrected[key]['r_over_R']
+                          * n_blades * rotor_radius * Omega[j] / (0.5 * u_inf ** 3 * np.pi * rotor_radius ** 2))
+    CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] *
+                          n_blades / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
 
-# fig3 = plt.figure(figsize=(12, 6))
-# plt.title('Axial and tangential induction')
-# plt.plot(results[:, 2], results[:, 0], 'r-', label=r'$a$')
-# plt.plot(results[:, 2], results[:, 1], 'g--', label=r'$a^,$')
-# plt.grid()
-# plt.xlabel('r/R')
-# plt.legend()
-# plt.show()
-
-# fig4 = plt.figure(figsize=(12, 6))
-# plt.title(r'Normal and tangential force, non-dimensioned by $\frac{1}{2} \rho U_\infty^2 R$')
-# plt.plot(results[:, 2], results[:, 3] / (0.5 * u_inf ** 2 * rotor_radius), 'r-', label=r'normal force')
-# plt.plot(results[:, 2], results[:, 4] / (0.5 * u_inf ** 2 * rotor_radius), 'g--', label=r'tangential force')
-# plt.grid()
-# plt.xlabel('r/R')
-# plt.legend()
-# plt.show()
-
-# fig5 = plt.figure(figsize=(12, 6))
-# plt.title(r'Circulation distribution, non-dimensioned by $\frac{\pi U_\infty^2}{\Omega * NBlades } $')
-# plt.plot(results[:, 2], results[:, 5] / (np.pi * u_inf ** 2 / (n_blades * Omega[1])), 'r-', label=r'$\Gamma$')
-# plt.grid()
-# plt.xlabel('r/R')
-# plt.legend()
-# plt.show()
+# -----Plot results for non yawed case------------------------------------------------------------------------
+n_tsr = len(tip_speed_ratios)
+n_yaw = len(yaw_angles)
+figs_non_yawed = plots_non_yawed(non_yawed_corrected_results, CT_corr, CP_corr,
+                                 CQ_corr, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades)

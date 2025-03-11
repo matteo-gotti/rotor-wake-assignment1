@@ -3,6 +3,7 @@ import numpy as np
 import math
 from mpmath import sec
 
+
 def compute_c_t(a, apply_glauert_correction=False):
     """
     This function calculates the thrust coefficient as a function of induction factor 'a'
@@ -12,9 +13,14 @@ def compute_c_t(a, apply_glauert_correction=False):
     if apply_glauert_correction:
         CT1 = 1.816
         a1 = 1 - np.sqrt(CT1) / 2
-        c_t[a > a1] = CT1 - 4 * (np.sqrt(CT1) - 1) * (1 - a[a > a1])
+        if type(a) is np.float64:
+            if a > a1:
+                c_t = CT1 - 4 * (np.sqrt(CT1) - 1) * (1 - a)
+        else:
+            c_t[a > a1] = CT1 - 4 * (np.sqrt(CT1) - 1) * (1 - a[a > a1])
 
     return c_t
+
 
 def compute_axial_induction(c_t):
     """
@@ -27,6 +33,7 @@ def compute_axial_induction(c_t):
     a[c_t >= CT2] = 1 + (c_t[c_t >= CT2] - CT1) / (4 * (np.sqrt(CT1) - 1))
     a[c_t < CT2] = 0.5 - 0.5 * np.sqrt(1 - c_t[c_t < CT2])
     return a
+
 
 def prandtl_tip_root_correction(r_R, root_radius_over_R, tip_radius_over_R, tip_speed_ratio, blades_number, axial_induction):
     """
@@ -42,6 +49,7 @@ def prandtl_tip_root_correction(r_R, root_radius_over_R, tip_radius_over_R, tip_
     f_root = np.array(2 / np.pi * np.arccos(np.exp(temp1)))
     f_root[np.isnan(f_root)] = 0
     return f_root * f_tip, f_tip, f_root
+
 
 def load_blade_element(v_normal, v_tangential, chord, twist, polar_alpha, polar_cl, polar_cd):
     """
@@ -60,8 +68,70 @@ def load_blade_element(v_normal, v_tangential, chord, twist, polar_alpha, polar_
     gamma = 0.5 * np.sqrt(v_magnitude_squared) * cl * chord
     return normal_force, tangential_force, gamma, alpha, inflow_angle
 
+
+def BEM_cycle(u_inf, r_over_R, root_radius_over_R, tip_radius_over_R, omega, rotor_R, blades_number,
+              chord_distribution, twist_distribution, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd,
+              psi_vec=[], prandtl_correction=True):
+
+    if (not (prandtl_correction) and (yaw_angle != 0)):
+        raise Exception(
+            'The study of the effect of Prandtl correction is considered only for the non yawed case')
+
+    if (len(psi_vec) == 0) and (yaw_angle != 0):
+        raise Exception('The yawed case should have a psi vector')
+
+    n_annuli = len(r_over_R) - 1
+    if len(psi_vec) == 0:
+        n_psi = 1
+    else:
+        n_psi = len(psi_vec)
+
+    max_iterations = 100
+    results = {}
+
+    results = {
+        'a': np.zeros([n_annuli, n_psi], dtype=float),
+        'a_line': np.zeros([n_annuli, n_psi], dtype=float),
+        'r_over_R': np.zeros([n_annuli, n_psi], dtype=float),
+        'normal_force': np.zeros([n_annuli, n_psi], dtype=float),
+        'tangential_force': np.zeros([n_annuli, n_psi], dtype=float),
+        'gamma': np.zeros([n_annuli, n_psi], dtype=float),
+        'alpha': np.zeros([n_annuli, n_psi], dtype=float),
+        'inflow_angle': np.zeros([n_annuli, n_psi], dtype=float),
+        'c_thrust': np.zeros([n_annuli, n_psi], dtype=float),
+        'c_torque': np.zeros([n_annuli, n_psi], dtype=float),
+        'c_power': np.zeros([n_annuli, n_psi], dtype=float),
+        'psi': 0 if yaw_angle == 0 else psi_vec,
+        'c_thrust_iterations': np.zeros([n_annuli, n_psi, max_iterations], dtype=float)
+    }
+    centroids = (r_over_R[1:] + r_over_R[:-1]) / 2
+    for i in range(len(r_over_R) - 1):
+        chord = np.interp(
+            (r_over_R[i] + r_over_R[i + 1]) / 2, r_over_R, chord_distribution)
+        twist = np.interp(
+            (r_over_R[i] + r_over_R[i + 1]) / 2, r_over_R, twist_distribution)
+        a, a_line, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, n_iterations = solve_stream_tube(
+            u_inf, r_over_R[i], r_over_R[i + 1], root_radius_over_R, tip_radius_over_R, omega, rotor_R,
+            blades_number, chord, twist, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, max_iterations, psi_vec, prandtl_correction)
+
+        results['a'][i, :] = a
+        results['a_line'][i, :] = a_line
+        results['r_over_R'][i, :] = centroids[i]
+        results['normal_force'][i, :] = normal_force
+        results['tangential_force'][i, :] = tangential_force
+        results['gamma'][i, :] = gamma
+        results['alpha'][i, :] = alpha
+        results['inflow_angle'][i, :] = inflow_angle * 180 / np.pi
+        results['c_thrust'][i, :] = c_t
+        results['c_torque'][i, :] = c_q
+        results['c_power'][i, :] = c_p
+        results['c_thrust_iterations'][i, :, :] = c_t_iterations
+
+    return results
+
+
 def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radius_over_R, omega, rotor_R, blades_number,
-                      chord, twist, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, psi_vec = [], prandtl_correction = True):
+                      chord, twist, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, max_iterations, psi_vec=[], prandtl_correction=True):
     """
     solve balance of momentum between blade element load and loading in the stream-tube
     input variables:
@@ -72,13 +142,8 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     Omega -rotational velocity
     NBlades - number of blades in rotor
     """
-    if (not(prandtl_correction) and (yaw_angle != 0)):
-        raise Exception('The study of the effect of Prandtl correction is considered only for the non yawed case')
-    
-    if (len(psi_vec) == 0) and (yaw_angle != 0):
-        raise Exception('The yawed case should have a psi vector')
-    
-    area = np.pi * ((r2_over_R * rotor_R) ** 2 - (r1_over_R * rotor_R) ** 2)  # area annulus
+    area = np.pi * ((r2_over_R * rotor_R) ** 2 -
+                    (r1_over_R * rotor_R) ** 2)  # area annulus
     r_over_R = (r1_over_R + r2_over_R) / 2  # centroid
     dr = rotor_R * (r2_over_R - r1_over_R)
 
@@ -88,20 +153,19 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     gamma = np.nan
     a = 0.0  # axial induction
     a_line = 0.0  # tangential induction factor
-    n_iterations = 100
-    # error limit for iteration process, in absolute value of induction
-    error_iterations = 0.00001
-    c_t_iterations = np.empty(n_iterations)
+    error_iterations = 0.00001  # error limit for iteration process, in absolute value of induction
+    c_t_iterations = np.empty(max_iterations)
 
-    for i in range(n_iterations):
+    for i in range(max_iterations):
         u_rotor = u_inf * (1 - a)  # axial velocity at rotor
         u_tangential = (1 + a_line) * omega * r_over_R * rotor_R  # tangential velocity at rotor
-        
+
         # calculate loads in blade segment in 2D (N/m)
         normal_force, tangential_force, gamma, alpha, inflow_angle = load_blade_element(
             u_rotor, u_tangential, chord, twist, polar_alpha, polar_cl, polar_cd)
         load_3d_axial = normal_force * dr * blades_number  # 3D force in axial direction
-        load_3d_tangential = normal_force * dr * blades_number  # 3D force in azimuthal/tangential direction
+        # 3D force in azimuthal/tangential direction
+        load_3d_tangential = normal_force * dr * blades_number
 
         c_t = load_3d_axial / (0.5 * area * u_inf ** 2)
 
@@ -110,31 +174,36 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
 
         if prandtl_correction:
             # correct new axial induction with Prandtl's correction
-            prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_new)
-            if prandtl < 0.0001: prandtl = 0.0001  # avoid divide by zero
+            prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
+                r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_new)
+            if prandtl < 0.0001:
+                prandtl = 0.0001  # avoid divide by zero
         else:
             prandtl = 1.0
 
         a_corrected = a_new / prandtl  # correct estimate of axial induction
         # for improving convergence, weigh current and previous iteration of axial induction
         a = 0.75 * a + 0.25 * a_corrected
-        c_t_iterations[i] = 4 * a_corrected * ( 1 - a_corrected)
+        c_t_iterations[i] = compute_c_t(a_corrected, apply_glauert_correction=True)
 
         # calculate azimuthal induction
-        a_line_new = tangential_force * blades_number / (2 * np.pi * u_inf * (1 - a) * omega * 2 * (r_over_R * rotor_R) ** 2)
+        a_line_new = tangential_force * blades_number / \
+            (2 * np.pi * u_inf * (1 - a) * omega * 2 * (r_over_R * rotor_R) ** 2)
         a_line_corrected = a_line_new / prandtl
         a_line = 0.75 * a_line + 0.25 * a_line_corrected
 
         # test convergence of solution, by checking convergence of axial induction
         if np.abs(a - a_corrected) < error_iterations and np.abs(a_line - a_line_corrected) < error_iterations:
             break
-    c_t = 4 * a_corrected * (1 - a_corrected)
+    c_t = compute_c_t(a_corrected, apply_glauert_correction=True)
     c_q = 4 * a_line_corrected * (1 - a_corrected) * r_over_R * tip_speed_ratio
-    c_p = c_t * (1 - a)
+    c_p = c_t * (1 - a_corrected)
+    iterations = i + 1
 
     if yaw_angle != 0:
         dpsi = psi_vec[1:] - psi_vec[:-1]
         dpsi = np.append(dpsi, dpsi[-1])
+
         c_t = np.zeros(len(psi_vec))
         c_q = np.zeros(len(psi_vec))
         normal_force = np.zeros(len(psi_vec))
@@ -149,37 +218,32 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
             wake_skew_angle = (0.6*a_new + 1) * yaw_angle
             a_skew = 2 * math.tan(wake_skew_angle/2) * r_over_R * math.sin(psi)
             a_new = a_new + a_skew
-            a_line_skew = 1/r_over_R * 1/tip_radius_over_R * math.sin(psi) * math.sin(yaw_angle)
+            a_line_skew = 1/r_over_R * 1/tip_radius_over_R * \
+                math.sin(psi) * math.sin(yaw_angle)
             a_line_new = a_line_new + a_line_skew
 
             # correct new axial induction with Prandtl's correction
             prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
                 r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_new)
-            if prandtl < 0.0001: prandtl = 0.0001   # avoid divide by zero
-            a_corrected[i] = a_new / prandtl                     # correct estimate of axial induction
-            a_line_corrected[i] = a_line_new / prandtl           # correct estimate of azimuthal induction
-            c_t = 4 * a_corrected[i] * (1 - a_corrected[i]*(2*math.cos(yaw_angle - a)))
+            if prandtl < 0.0001:
+                prandtl = 0.0001   # avoid divide by zero
+            # correct estimate of axial induction
+            a_corrected[i] = a_new / prandtl
+            # correct estimate of azimuthal induction
+            a_line_corrected[i] = a_line_new / prandtl
+
+            c_t = 4 * a_corrected[i] * \
+                (1 - a_corrected[i]*(2*math.cos(yaw_angle - a)))
             c_p = c_t * (math.cos(yaw_angle) - a)
-            c_q = 4 * a_line_corrected[i] * (1 - a) * r_over_R * tip_speed_ratio * (math.cos(psi)**2 + (math.cos(wake_skew_angle)**2) * (math.sin(psi))**2 )
-            normal_force[i] = c_t * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
-            tangential_force[i] = c_q * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
-            inflow_angle[i] = np.arctan2(u_inf*(math.cos(yaw_angle) - a_corrected[i]), omega*r_over_R*rotor_R*(1 + a_line_corrected[i]) + u_inf*math.sin(yaw_angle)*math.sin(psi))
+            c_q = 4 * a_line_corrected[i] * (1 - a) * r_over_R * tip_speed_ratio * (
+                math.cos(psi)**2 + (math.cos(wake_skew_angle)**2) * (math.sin(psi))**2)
+            normal_force[i] = c_t * 0.5 * u_inf**2 * np.pi * \
+                rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
+            tangential_force[i] = c_q * 0.5 * u_inf**2 * np.pi * \
+                rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
+
+            inflow_angle[i] = np.arctan2(u_inf*(math.cos(yaw_angle) - a_corrected[i]), omega*r_over_R*rotor_R*(
+                1 + a_line_corrected[i]) + u_inf*math.sin(yaw_angle)*math.sin(psi))
             alpha[i] = inflow_angle[i] * 180 / np.pi - twist
 
-    results = {
-        'a': a_corrected, 
-        'a_line': a_line_corrected, 
-        'r_over_R': r_over_R,
-        'normal_force': normal_force, 
-        'tangential_force': tangential_force, 
-        'gamma': gamma,
-        'alpha': alpha,
-        'inflow_angle': inflow_angle,
-        'c_thrust': c_t,
-        'c_torque': c_q,
-        'c_power': c_p,
-        'psi': 0 if yaw_angle == 0 else psi_vec,
-        'c_thrust_iterations': c_t_iterations[~np.isnan(c_t_iterations)]
-        }
-    
-    return results
+    return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, iterations
