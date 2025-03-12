@@ -65,14 +65,14 @@ def plot_polar_data(polar_alpha, polar_cl, polar_cd):
     return fig
 
 
-def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades):
+def plots_non_yawed(corrected_results, uncorrected_results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades):
     n_tsr = len(tip_speed_ratios)
     # ----Spanwise distribution of angle of attack------------------------------------------------------------
     fig_alpha = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        alpha = results[f'yaw_0.0_TSR_{TSR}']['alpha']
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        alpha = corrected_results[f'yaw_0.0_TSR_{TSR}']['alpha']
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
         color = colormap(i)
         plt.plot(r_R, alpha, color=color, label=f'TSR={TSR}')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -86,8 +86,8 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     fig_phi = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        inflow_angle = results[f'yaw_0.0_TSR_{TSR}']['inflow_angle']
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        inflow_angle = corrected_results[f'yaw_0.0_TSR_{TSR}']['inflow_angle']
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
         color = colormap(i)
         plt.plot(r_R, inflow_angle, color=color, label=f'TSR={TSR}')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -101,8 +101,8 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     fig_a = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        a = results[f'yaw_0.0_TSR_{TSR}']['a']
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        a = corrected_results[f'yaw_0.0_TSR_{TSR}']['a']
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
         color = colormap(i)
         plt.plot(r_R, a, color=color, label=f'TSR={TSR}')
@@ -117,8 +117,8 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     fig_a_line = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        a_line = results[f'yaw_0.0_TSR_{TSR}']['a_line']
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        a_line = corrected_results[f'yaw_0.0_TSR_{TSR}']['a_line']
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
         color = colormap(i)
         plt.plot(r_R, a_line, color=color, label=f'TSR={TSR}')
@@ -133,8 +133,8 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     fig_c_t = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        c_t = results[f'yaw_0.0_TSR_{TSR}']['normal_force'] / (0.5 * u_inf**2 * rotor_radius)
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force'] / (0.5 * u_inf**2 * rotor_radius)
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
         color = colormap(i)
         plt.plot(r_R, c_t, color=color, label=f'TSR={TSR}')
@@ -149,8 +149,8 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     fig_c_q = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        c_q = results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        c_q = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
         color = colormap(i)
         plt.plot(r_R, c_q, color=color, label=f'TSR={TSR}')
@@ -165,8 +165,8 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     fig_c_q = plt.figure()
     colormap = cm.get_cmap('viridis', n_tsr)
     for i, TSR in enumerate(tip_speed_ratios):
-        c_q = results[f'yaw_0.0_TSR_{TSR}']['gamma'] / (np.pi * u_inf**2 / (n_blades * Omega[i]))
-        r_R = results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        c_q = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma'] / (np.pi * u_inf**2 / (n_blades * Omega[i]))
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
         color = colormap(i)
         plt.plot(r_R, c_q, color=color, label=f'TSR={TSR}')
@@ -193,4 +193,19 @@ def plots_non_yawed(results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf, 
     # plt.legend()
     # plt.show()
 
+    # ----Comparison between corrected and uncorrected results------------------------------------------------
+    # ----Spanwise distribution of angle of attack------------------------------------------------------------
+    fig_alpha_comparison = plt.figure()
+    colormap = cm.get_cmap('viridis', n_tsr)
+    for i, TSR in enumerate(tip_speed_ratios):
+        alpha = corrected_results[f'yaw_0.0_TSR_{TSR}']['alpha']
+        r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+        color = colormap(i)
+        plt.plot(r_R, alpha, color=color, label=f'TSR={TSR}')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$\alpha$ [deg]')
+    # plt.title('Alpha vs r/R')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
     return fig_alpha, fig_phi, fig_a, fig_a_line, fig_c_t, fig_c_q

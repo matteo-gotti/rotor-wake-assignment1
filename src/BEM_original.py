@@ -95,7 +95,6 @@ for yaw_angle in yaw_angles:
             u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[j], rotor_radius, n_blades,
             chord_distribution, twist_distribution, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, psi_vector)
 
-# areas = (r_over_R[1:] ** 2 - r_over_R[:-1] ** 2) * np.pi * rotor_radius ** 2
 non_yawed_keys = [key for key in results_corrected.keys() if 'yaw_0.0' in key]
 yawed_keys = [key for key in results_corrected.keys() if 'yaw_0.0' not in key]
 
@@ -104,18 +103,25 @@ non_yawed_corrected_results = {key: results_corrected[key] for key in non_yawed_
 CT_corr = {}
 CP_corr = {}
 CQ_corr = {}
-dr = (r_over_R[1:] - r_over_R[:-1]) * rotor_radius
+dr = np.array([(r_over_R[1:] - r_over_R[:-1]) * rotor_radius]).T
 for j, tip_speed_ratio in enumerate(tip_speed_ratios):
     key = non_yawed_keys[j]
-    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] *
-                          n_blades / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
+    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] * n_blades) / \
+        (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2)
     CP_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * results_corrected[key]['r_over_R']
                           * n_blades * rotor_radius * Omega[j] / (0.5 * u_inf ** 3 * np.pi * rotor_radius ** 2))
-    CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] *
-                          n_blades / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
+    CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * n_blades
+                          / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
+
+# ----Solve BEM model for non-corrected case TSR = 8, yaw_angle = 0-------------------------------------------
+results_uncorrected = BEM_cycle(
+    u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[1], rotor_radius, n_blades,
+    chord_distribution, twist_distribution, 0.0, 8, polar_alpha, polar_cl, polar_cd, prandtl_correction=False)
 
 # -----Plot results for non yawed case------------------------------------------------------------------------
 n_tsr = len(tip_speed_ratios)
 n_yaw = len(yaw_angles)
-figs_non_yawed = plots_non_yawed(non_yawed_corrected_results, CT_corr, CP_corr,
+figs_non_yawed = plots_non_yawed(non_yawed_corrected_results, results_uncorrected, CT_corr, CP_corr,
                                  CQ_corr, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades)
+
+# print(1)

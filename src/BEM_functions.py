@@ -63,8 +63,7 @@ def load_blade_element(v_normal, v_tangential, chord, twist, polar_alpha, polar_
     lift = 0.5 * v_magnitude_squared * cl * chord
     drag = 0.5 * v_magnitude_squared * cd * chord
     normal_force = lift * np.cos(inflow_angle) + drag * np.sin(inflow_angle)
-    tangential_force = lift * \
-        np.sin(inflow_angle) - drag * np.cos(inflow_angle)
+    tangential_force = lift * np.sin(inflow_angle) - drag * np.cos(inflow_angle)
     gamma = 0.5 * np.sqrt(v_magnitude_squared) * cl * chord
     return normal_force, tangential_force, gamma, alpha, inflow_angle
 
