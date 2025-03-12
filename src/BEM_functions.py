@@ -224,6 +224,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         c_q = 4 * a_line_corrected[i] * (1 - a_corrected[i]) * r_over_R * tip_speed_ratio * (
             np.cos(psi_vec)**2 + (np.cos(wake_skew_angle)**2) * (np.sin(psi_vec))**2)
         normal_force = c_t * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi * r_over_R * rotor_R
+
         tangential_force = c_q * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi * r_over_R * rotor_R
         v_norm = omega*r_over_R*rotor_R*(1 + a_line_corrected)
         v_tan = u_inf*(np.cos(yaw_angle) - a_corrected)

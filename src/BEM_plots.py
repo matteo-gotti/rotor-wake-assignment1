@@ -65,7 +65,7 @@ def plot_polar_data(polar_alpha, polar_cl, polar_cd):
     return fig
 
 
-def plots_non_yawed(corrected_results, uncorrected_results, CT, CP, CQ, rotor_radius, tip_speed_ratios, u_inf,
+def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_speed_ratios, u_inf,
                     Omega, n_blades, plot_corrected=True, plot_comparison=True):
     n_tsr = len(tip_speed_ratios)
     # ----Spanwise distribution of angle of attack------------------------------------------------------------
