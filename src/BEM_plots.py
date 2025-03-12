@@ -123,7 +123,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
             color = colormap(i)
             plt.plot(r_R, a_line, color=color, label=f'TSR={TSR}')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$a$\'[-]')
+        plt.ylabel(r"$a'$[-]")
         # plt.title('Tangential Induction Factors vs r/R')
         plt.grid(True)
         plt.legend()
@@ -138,7 +138,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
             color = colormap(i)
             plt.plot(r_R, c_t, color=color, label=f'TSR={TSR}')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$f_{norm}$ [-]')
+        plt.ylabel(r'$C_n$ [-]')
         # plt.title('Normal force coefficient vs r/R')
         plt.grid(True)
         plt.legend()
@@ -147,13 +147,42 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
         plt.figure()
         colormap = cm.get_cmap('viridis', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
-            c_q = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
+            c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
             color = colormap(i)
-            plt.plot(r_R, c_q, color=color, label=f'TSR={TSR}')
+            plt.plot(r_R, c_t, color=color, label=f'TSR={TSR}')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$f_{tan}$ [-]')
+        plt.ylabel(r'$C_t$ [-]')
+        # plt.title('Tangential force coefficient vs r/R')
+        plt.grid(True)
+        plt.legend()
+
+        # ----Spanwise distribution of CT-----------------------------------------------------
+        plt.figure()
+        colormap = cm.get_cmap('viridis', n_tsr)
+        for i, TSR in enumerate(tip_speed_ratios):
+            c_T = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_thrust']
+            r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+
+            color = colormap(i)
+            plt.plot(r_R, c_T, color=color, label=f'TSR={TSR}')
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$C_T(r)$ [-]')
+        plt.grid(True)
+        plt.legend()
+
+        # ----Spanwise distribution of CQ-----------------------------------------------------
+        plt.figure()
+        colormap = cm.get_cmap('viridis', n_tsr)
+        for i, TSR in enumerate(tip_speed_ratios):
+            c_Q = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_torque']
+            r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+
+            color = colormap(i)
+            plt.plot(r_R, c_Q, color=color, label=f'TSR={TSR}')
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$C_Q(r)$ [-]')
         # plt.title('Tangential force coefficient vs r/R')
         plt.grid(True)
         plt.legend()
@@ -162,7 +191,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
         plt.figure()
         colormap = cm.get_cmap('viridis', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
-            c_q = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma'] / (np.pi * u_inf**2 / (n_blades * Omega[i]))
+            c_q = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
             color = colormap(i)
@@ -242,7 +271,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
         plt.plot(r_R_corr, a_line_corr, color=colormap(0), label=f'with Pradtl correction')
         plt.plot(r_R_uncorr, a_line_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$a$\'[-]')
+        plt.ylabel(r"$a'$[-]")
         # plt.title('Tangential Induction Factors vs r/R')
         plt.grid(True)
         plt.legend()
@@ -254,19 +283,43 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
         plt.plot(r_R_corr, c_t_corr, color=colormap(0), label=f'with Pradtl correction')
         plt.plot(r_R_uncorr, c_t_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$f_{norm}$ [-]')
+        plt.ylabel(r'$C_n$ [-]')
         # plt.title('Normal force coefficient vs r/R')
         plt.grid(True)
         plt.legend()
 
-        # ----Spanwise distribution of tangentual loading-----------------------------------------------------
+        # ----Spanwise distribution of tangential loading-----------------------------------------------------
         plt.figure()
         c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
         c_q_uncorr = uncorrected_results['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
         plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
         plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$f_{tan}$ [-]')
+        plt.ylabel(r'$C_t$ [-]')
+        # plt.title('Tangential force coefficient vs r/R')
+        plt.grid(True)
+        plt.legend()
+
+        # ----Spanwise distribution of C_T-----------------------------------------------------
+        plt.figure()
+        c_T_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_thrust']
+        c_T_uncorr = uncorrected_results['c_thrust']
+        plt.plot(r_R_corr, c_T_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_uncorr, c_T_uncorr, color=colormap(1), label=f'without Prandtl correction')
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$C_T(r)$ [-]')
+        # plt.title('Normal force coefficient vs r/R')
+        plt.grid(True)
+        plt.legend()
+
+        # ----Spanwise distribution of C_Q-----------------------------------------------------
+        plt.figure()
+        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_torque']
+        c_q_uncorr = uncorrected_results['c_torque']
+        plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$C_Q(r)$ [-]')
         # plt.title('Tangential force coefficient vs r/R')
         plt.grid(True)
         plt.legend()
@@ -307,18 +360,7 @@ def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_ove
         for j, ax in enumerate(axs):
             key = f'yaw_{yaw_angles[j]}_TSR_8.0'
             Y = np.array(results[key][var]).T
-
-            if var == 'normal_force' or var == 'tangential_force':
-                Y = Y / (0.5 * u_inf**2 * rotor_radius)
-                vmax = vmax / (0.5 * u_inf**2 * rotor_radius)
-                vmin = vmin / (0.5 * u_inf**2 * rotor_radius)
-
-            if var == 'gamma':
-                Y = Y / (np.pi * u_inf**2 / (n_blades * Omega))
-                vmax = vmax / (np.pi * u_inf**2 / (n_blades * Omega))
-                vmin = vmin / (np.pi * u_inf**2 / (n_blades * Omega))
-
-            c = ax.contourf(Psi, R, Y, levels=1000, cmap=colormap, vmin=vmin, vmax=vmax)
+            c = ax.contourf(Psi, R, Y, levels=30, cmap=colormap, vmin=vmin, vmax=vmax)
             ax.set_title(f'Yaw angle {yaw_angles[j]}°', fontsize=14, pad=30)
             ax.set_yticklabels([])
             ax.grid(True)

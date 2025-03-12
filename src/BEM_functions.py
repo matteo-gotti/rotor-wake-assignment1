@@ -56,7 +56,7 @@ def load_blade_element(v_normal, v_tangential, chord, twist, polar_alpha, polar_
     v_magnitude_squared = v_normal ** 2 + v_tangential ** 2
     inflow_angle = np.arctan2(v_normal, v_tangential)
     alpha = inflow_angle * 180 / np.pi - twist
-    if alpha > max(polar_alpha) or alpha < min(polar_alpha):
+    if np.any(alpha > max(polar_alpha)) or np.any(alpha < min(polar_alpha)):
         raise Exception('Angle of attack out of range')
 
     cl = np.interp(alpha, polar_alpha, polar_cl)
@@ -121,7 +121,7 @@ def BEM_cycle(u_inf, r_over_R, root_radius_over_R, tip_radius_over_R, omega, rot
         results['tangential_force'][i, :] = tangential_force
         results['gamma'][i, :] = gamma
         results['alpha'][i, :] = alpha
-        results['inflow_angle'][i, :] = inflow_angle * 180 / np.pi
+        results['inflow_angle'][i, :] = inflow_angle
         results['c_thrust'][i, :] = c_t
         results['c_torque'][i, :] = c_q
         results['c_power'][i, :] = c_p
@@ -166,7 +166,6 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         load_3d_axial = normal_force * dr * blades_number  # 3D force in axial direction
         # 3D force in azimuthal/tangential direction
         load_3d_tangential = normal_force * dr * blades_number
-
         c_t = load_3d_axial / (0.5 * area * u_inf ** 2)
 
         # calculate new axial induction, accounting for Glauert's correction
@@ -198,6 +197,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     c_t = compute_c_t(a_corrected, apply_glauert_correction=True)
     c_q = 4 * a_line_corrected * (1 - a_corrected) * r_over_R * tip_speed_ratio
     c_p = c_t * (1 - a_corrected)
+    inflow_angle = np.degrees(inflow_angle)
     iterations = i + 1
 
     if yaw_angle != 0:
@@ -207,7 +207,6 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
 
         wake_skew_angle = (0.6*a_new + 1) * yaw_angle
         a_tot = a_new * (1 + 2 * np.tan(wake_skew_angle/2) * r_over_R * np.sin(psi_vec))
-        a_line_tot = a_line_new + 1/r_over_R * 1/tip_speed_ratio * np.sin(yaw_angle * np.sin(psi_vec))
 
         if prandtl_correction:
             prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
@@ -217,18 +216,21 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
             prandtl = np.ones_like(a_tot)
 
         a_corrected = a_tot / prandtl
-        a_line_corrected = a_line_tot / prandtl
+        a_line_corrected = a_line_new / prandtl + 1/r_over_R * 1/tip_speed_ratio * np.sin(yaw_angle * np.sin(psi_vec))
 
-        c_t = 4 * a_corrected * (1 - a_corrected*(2*np.cos(yaw_angle - a_corrected)))
+        c_t = 4 * a_corrected * np.sqrt((1 - a_corrected*(2*np.cos(yaw_angle) - a_corrected)))
         c_p = c_t * (np.cos(yaw_angle) - a_corrected)
-        c_q = 4 * a_line_corrected[i] * (1 - a_corrected[i]) * r_over_R * tip_speed_ratio * (
+        c_q = 4 * a_line_corrected[i] * (np.cos(yaw_angle) - a_corrected[i]) * r_over_R * tip_speed_ratio * (
             np.cos(psi_vec)**2 + (np.cos(wake_skew_angle)**2) * (np.sin(psi_vec))**2)
-        normal_force = c_t * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi * r_over_R * rotor_R
 
-        tangential_force = c_q * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi * r_over_R * rotor_R
-        v_norm = omega*r_over_R*rotor_R*(1 + a_line_corrected)
-        v_tan = u_inf*(np.cos(yaw_angle) - a_corrected)
-        inflow_angle = np.arctan2(v_norm, v_tan)
-        alpha = inflow_angle * 180 / np.pi - twist
+        v_tan = omega*r_over_R*rotor_R*(1 + a_line_corrected)
+        v_norm = u_inf*(np.cos(yaw_angle) - a_corrected)
+        normal_force, tangential_force, gamma, alpha, inflow_angle = load_blade_element(
+            v_norm, v_tan, chord, twist, polar_alpha, polar_cl, polar_cd)
+        inflow_angle = np.degrees(inflow_angle)
+
+    normal_force = normal_force / (0.5 * u_inf**2 * rotor_R)
+    tangential_force = normal_force / (0.5 * u_inf**2 * rotor_R)
+    gamma = gamma / (np.pi * u_inf**2 / (blades_number * omega))
 
     return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, iterations

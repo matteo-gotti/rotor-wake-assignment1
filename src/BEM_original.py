@@ -37,8 +37,8 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
-plot_non_yawed_comparison = True   # plot the comparison of results with and without Prandtl correction for the non yawed case
+plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
 plot_yawed = True    # plot the results for the yawed case with Prandtl correction
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
@@ -159,9 +159,10 @@ if plot_yawed:
     results_to_add['c_power'] = np.tile(results_to_add['c_power'], (1, n_psi))
     results_yawed['yaw_0.0_TSR_8.0'] = results_to_add
 
-    variables_to_plot = ['alpha', 'inflow_angle', 'a', 'a_line', 'c_thrust', 'c_torque']
-    labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r'$a$\' [-]',
-              'Normal force coefficient [-]', 'Tangential force coefficient[-]']
+    variables_to_plot = ['alpha', 'inflow_angle', 'a', 'a_line',
+                         'normal_force', 'tangential_force', 'c_thrust', 'c_torque', 'c_power']
+    labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r"$a'$ [-]",
+              r'$C_n$ [-]', r'$C_t$ [-]', r'$C_T$ [-]', r'$C_Q$ [-]', r'$C_P$ [-]']
     plots_yawed(results_yawed, rotor_radius, yaw_angles, u_inf,
                 Omega[1], n_blades, centroids, psi_vec, variables_to_plot, labels)
 
