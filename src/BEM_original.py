@@ -148,7 +148,7 @@ if plot_yawed:
     results_yawed = {key: results_corrected[key] for key in yawed_keys}
     results_to_add = results_corrected['yaw_0.0_TSR_8.0']
     results_to_add['a'] = np.tile(results_to_add['a'], (1, n_psi))
-    results_to_add['a_line'] = np.tile(results_to_add['a'], (1, n_psi))
+    results_to_add['a_line'] = np.tile(results_to_add['a_line'], (1, n_psi))
     results_to_add['r_over_R'] = np.tile(results_to_add['r_over_R'], (1, n_psi))
     results_to_add['normal_force'] = np.tile(results_to_add['normal_force'], (1, n_psi))
     results_to_add['tangential_force'] = np.tile(results_to_add['tangential_force'], (1, n_psi))
@@ -160,9 +160,10 @@ if plot_yawed:
     results_to_add['c_power'] = np.tile(results_to_add['c_power'], (1, n_psi))
     results_yawed['yaw_0.0_TSR_8.0'] = results_to_add
 
-    variables_to_plot = ['alpha', 'inflow_angle', 'a', 'a_line', 'normal_force', 'tangential_force']
-    UDMs = ['[deg]', '[deg]', '[-]', '[-]', '[-]', '[-]']
+    variables_to_plot = ['alpha', 'inflow_angle', 'a', 'a_line', 'c_thrust', 'c_torque']
+    labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r'$a$\' [-]',
+              'Normal force coefficient [-]', 'Tangential force coefficient[-]']
     plots_yawed(results_yawed, rotor_radius, yaw_angles, u_inf,
-                Omega[1], n_blades, centroids, psi_vec, variables_to_plot, UDMs)
+                Omega[1], n_blades, centroids, psi_vec, variables_to_plot, labels)
 
-print(1)
+print('Done')

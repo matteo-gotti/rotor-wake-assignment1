@@ -1,6 +1,5 @@
 # import necessary libraries
 import numpy as np
-import math
 
 
 def compute_c_t(a, apply_glauert_correction=False):
@@ -57,6 +56,9 @@ def load_blade_element(v_normal, v_tangential, chord, twist, polar_alpha, polar_
     v_magnitude_squared = v_normal ** 2 + v_tangential ** 2
     inflow_angle = np.arctan2(v_normal, v_tangential)
     alpha = inflow_angle * 180 / np.pi - twist
+    if alpha > max(polar_alpha) or alpha < min(polar_alpha):
+        raise Exception('Angle of attack out of range')
+
     cl = np.interp(alpha, polar_alpha, polar_cl)
     cd = np.interp(alpha, polar_alpha, polar_cd)
     lift = 0.5 * v_magnitude_squared * cl * chord
@@ -203,43 +205,29 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         dpsi = psi_vec[1:] - psi_vec[:-1]
         dpsi = np.append(dpsi, dpsi[-1])
 
-        c_t = np.zeros(len(psi_vec))
-        c_q = np.zeros(len(psi_vec))
-        normal_force = np.zeros(len(psi_vec))
-        tangential_force = np.zeros(len(psi_vec))
-        gamma = np.zeros(len(psi_vec))
-        a_corrected = np.zeros(len(psi_vec))
-        a_line_corrected = np.zeros(len(psi_vec))
-        alpha = np.zeros(len(psi_vec))
-        inflow_angle = np.zeros(len(psi_vec))
+        wake_skew_angle = (0.6*a_new + 1) * yaw_angle
+        a_tot = a_new * (1 + 2 * np.tan(wake_skew_angle/2) * r_over_R * np.sin(psi_vec))
+        a_line_tot = a_line_new + 1/r_over_R * 1/tip_speed_ratio * np.sin(yaw_angle * np.sin(psi_vec))
 
-        for i, psi in enumerate(psi_vec):
-            wake_skew_angle = (0.6*a_new + 1) * yaw_angle
-            a_tot = a_new * (1 + 2 * math.tan(wake_skew_angle/2) * r_over_R * math.sin(psi))
-            a_line_tot = a_line_new + 1/r_over_R * 1/tip_speed_ratio * math.sin(yaw_angle * math.sin(psi))
-
-            # correct new axial induction with Prandtl's correction
+        if prandtl_correction:
             prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
                 r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_tot)
-            if prandtl < 0.0001:
-                prandtl = 0.0001   # avoid divide by zero
-            # correct estimate of axial induction
-            a_corrected[i] = a_tot / prandtl
-            # correct estimate of azimuthal induction
-            a_line_corrected[i] = a_line_tot / prandtl
+            prandtl[prandtl < 0.0001] = 0.0001
+        else:
+            prandtl = np.ones_like(a_tot)
 
-            c_t = 4 * a_corrected[i] * \
-                (1 - a_corrected[i]*(2*math.cos(yaw_angle - a_corrected[i])))
-            c_p = c_t * (math.cos(yaw_angle) - a_corrected[i])
-            c_q = 4 * a_line_corrected[i] * (1 - a_corrected[i]) * r_over_R * tip_speed_ratio * (
-                math.cos(psi)**2 + (math.cos(wake_skew_angle)**2) * (math.sin(psi))**2)
-            normal_force[i] = c_t * 0.5 * u_inf**2 * np.pi * \
-                rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
-            tangential_force[i] = c_q * 0.5 * u_inf**2 * np.pi * \
-                rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
+        a_corrected = a_tot / prandtl
+        a_line_corrected = a_line_tot / prandtl
 
-            inflow_angle[i] = np.arctan2(u_inf*(math.cos(yaw_angle) - a_corrected[i]), omega*r_over_R*rotor_R*(
-                1 + a_line_corrected[i]) + u_inf*math.sin(yaw_angle)*math.sin(psi))
-            alpha[i] = inflow_angle[i] * 180 / np.pi - twist
+        c_t = 4 * a_corrected * (1 - a_corrected*(2*np.cos(yaw_angle - a_corrected)))
+        c_p = c_t * (np.cos(yaw_angle) - a_corrected)
+        c_q = 4 * a_line_corrected[i] * (1 - a_corrected[i]) * r_over_R * tip_speed_ratio * (
+            np.cos(psi_vec)**2 + (np.cos(wake_skew_angle)**2) * (np.sin(psi_vec))**2)
+        normal_force = c_t * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi * r_over_R * rotor_R
+        tangential_force = c_q * 0.5 * u_inf**2 * np.pi * rotor_R**2 * dr * dpsi * r_over_R * rotor_R
+        v_norm = omega*r_over_R*rotor_R*(1 + a_line_corrected)
+        v_tan = u_inf*(np.cos(yaw_angle) - a_corrected)
+        inflow_angle = np.arctan2(v_norm, v_tan)
+        alpha = inflow_angle * 180 / np.pi - twist
 
     return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, iterations

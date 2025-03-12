@@ -288,39 +288,45 @@ def plots_non_yawed(corrected_results, uncorrected_results, CT, CP, CQ, rotor_ra
     return
 
 
-def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_over_R, psi, variables_to_plot, UDMs):
+def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_over_R, psi, variables_to_plot, labels):
 
-    if len(variables_to_plot) != len(UDMs):
-        raise ValueError('The number of variables to plot must match the number of units of measurement')
+    if len(variables_to_plot) != len(labels):
+        raise ValueError('The number of variables to plot must match the number of labels')
     n_yaw = len(yaw_angles)
     R, Psi = np.meshgrid(r_over_R, psi)
     for i, var in enumerate(variables_to_plot):
         if var not in results['yaw_0.0_TSR_8.0']:
             raise ValueError(f'Variable {var} not found in results')
 
-        fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(18, 7))
+        fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(14, 6))
         colormap = plt.get_cmap('viridis')
 
         vmax = max([np.max(np.array(results[f'yaw_{yaw}_TSR_8.0'][var])) for yaw in yaw_angles])
         vmin = min([np.min(np.array(results[f'yaw_{yaw}_TSR_8.0'][var])) for yaw in yaw_angles])
 
-        # Create the polar plots
-        for i, ax in enumerate(axs):
-            key = f'yaw_{yaw_angles[i]}_TSR_8.0'
+        for j, ax in enumerate(axs):
+            key = f'yaw_{yaw_angles[j]}_TSR_8.0'
             Y = np.array(results[key][var]).T
+
             if var == 'normal_force' or var == 'tangential_force':
                 Y = Y / (0.5 * u_inf**2 * rotor_radius)
+                vmax = vmax / (0.5 * u_inf**2 * rotor_radius)
+                vmin = vmin / (0.5 * u_inf**2 * rotor_radius)
+
             if var == 'gamma':
                 Y = Y / (np.pi * u_inf**2 / (n_blades * Omega))
+                vmax = vmax / (np.pi * u_inf**2 / (n_blades * Omega))
+                vmin = vmin / (np.pi * u_inf**2 / (n_blades * Omega))
+
             c = ax.contourf(Psi, R, Y, levels=1000, cmap=colormap, vmin=vmin, vmax=vmax)
-            ax.set_title(f'Yaw angle {yaw_angles[i]}°', fontsize=14, pad=30)
+            ax.set_title(f'Yaw angle {yaw_angles[j]}°', fontsize=14, pad=30)
             ax.set_yticklabels([])
             ax.grid(True)
-
         cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
         cb = fig.colorbar(c, cax=cbar_ax, orientation='horizontal')
-        cb.set_label(var + UDMs[i], fontsize=12)
-        plt.tight_layout(rect=[0, 0.15, 1, 0.92])
-        plt.show()
+        cb.set_label(labels[i], fontsize=12)
+        fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.92, wspace=0.3)
+
+    plt.show()
 
     return
