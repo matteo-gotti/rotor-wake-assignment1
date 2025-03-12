@@ -6,12 +6,14 @@ import matplotlib.pyplot as plt
 import os
 
 """
+
+
 TODO:
 1. ADD POSSIBILITY OF NON-ZERO YAW
 2. ADD POSSIBILITY OF COMPUTING DIFFERENT TIP SPEED RATIOS
-3. For a given CT=0.75, change the pitch or the chord distribution or the twist distribution 
-    in order to maximise the Cp in axial flow at tip speed ratio 8 (eight). You can choose your 
-    own design approach. Compare with the expected result from actuator disk theory. 
+3. For a given CT=0.75, change the pitch or the chord distribution or the twist distribution
+    in order to maximise the Cp in axial flow at tip speed ratio 8 (eight). You can choose your
+    own design approach. Compare with the expected result from actuator disk theory.
     Discuss the rationale for your design, including the twist and chord distributions.
 4. Plots with explanation of results (alpha/inflow/a/a'/Ct/Cn/Cq vs r/R)
         - Span-wise distribution of angle of attack and inflow angle
@@ -20,15 +22,24 @@ TODO:
         - Total thrust and torque versus tip-speed ratio/advance ratio
         - For the cases of yawed rotor (optional), also plot the azimuthal variation (suggestion: polar contour plot)
 5. Plots with explanation of the influence of the tip correction
-6. (optional): Plots with explanation of influence of number of annuli, spacing method (constant, cosine) 
+6. (optional): Plots with explanation of influence of number of annuli, spacing method (constant, cosine)
     and convergence history for total thrust.
 7. (optional): Explanation of the design approach used for maximizing the Cp or efficiency
 8. (optional): Plots with explanation of the new designs
-9. Plot the distribution of stagnation pressure as a function of radius at four locations: infinity upwind, 
+9. Plot the distribution of stagnation pressure as a function of radius at four locations: infinity upwind,
     at the rotor (upwind side), at the rotor (downwind side), infinity downwind.
-10. (optional): Plot a representation of the system of circulation. Discuss the generation and release 
+10. (optional): Plot a representation of the system of circulation. Discuss the generation and release
     of vorticity in relation to the loading and circulation over the blade.
 """
+
+# ----Plotting flags------------------------------------------------------------------------------------------
+plot_glauert = False    # plot the Glauert correction
+plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
+plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
+plot_polar = False    # plot the airfoil polars
+plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
+plot_yawed = True    # plot the results for the yawed case with Prandtl correction
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
 n_blades = 3  # number of blades [-]
@@ -64,13 +75,17 @@ if not (any(x == 0 for x in yaw_angles)):
     raise Exception("The yaw angle 0 is not in the list of yaw angles")
 
 # ----Plot induction factor to show Glauert correction--------------------------------------------------------
-fig_glauert = plot_glauert_correction()
+if plot_glauert:
+    fig_glauert = plot_glauert_correction()
 
 # ----Applying Prandtl tip-speed correction-------------------------------------------------------------------
-fig_prandtl_single_tsr = plot_prandtl_correction(
-    r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios[1], n_blades)
-fig_prandtl = plot_prandtl_correction(
-    r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios, n_blades)
+if plot_prandtl_single_tsr:
+    fig_prandtl_single_tsr = plot_prandtl_correction(
+        r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios[1], n_blades)
+
+if plot_prandtl:
+    fig_prandtl = plot_prandtl_correction(
+        r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratios, n_blades)
 
 # ----Import polar data---------------------------------------------------------------------------------------
 polar_data = pd.read_csv(airfoil_data_path, header=0, names=[
@@ -80,9 +95,10 @@ polar_cl = polar_data['cl'][:]
 polar_cd = polar_data['cd'][:]
 
 # -----Plot polars of the airfoil C-alfa and Cl-Cd------------------------------------------------------------
-fig_polar = plot_polar_data(polar_alpha, polar_cl, polar_cd)
+if plot_polar:
+    fig_polar = plot_polar_data(polar_alpha, polar_cl, polar_cd)
 
-# -----Solve BEM model for each requested case (corrected)----------------------------------------------------------------
+# -----Solve BEM model for each requested case (corrected)----------------------------------------------------
 results_corrected = {}
 for yaw_angle in yaw_angles:
     psi_vector = psi_vec if yaw_angle != 0 else []
@@ -98,7 +114,7 @@ for yaw_angle in yaw_angles:
 non_yawed_keys = [key for key in results_corrected.keys() if 'yaw_0.0' in key]
 yawed_keys = [key for key in results_corrected.keys() if 'yaw_0.0' not in key]
 
-# -----Compute CT, CP, CQ for non yawed corrected case------------------------------------------------------------------
+# -----Compute CT, CP, CQ for non yawed corrected case--------------------------------------------------------
 non_yawed_corrected_results = {key: results_corrected[key] for key in non_yawed_keys}
 CT_corr = {}
 CP_corr = {}
@@ -121,7 +137,32 @@ results_uncorrected = BEM_cycle(
 # -----Plot results for non yawed case------------------------------------------------------------------------
 n_tsr = len(tip_speed_ratios)
 n_yaw = len(yaw_angles)
-figs_non_yawed = plots_non_yawed(non_yawed_corrected_results, results_uncorrected, CT_corr, CP_corr,
-                                 CQ_corr, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades)
+centroids = (r_over_R[1:] + r_over_R[:-1]) / 2
+if plot_non_yawed_corrected or plot_non_yawed_comparison:
+    plots_non_yawed(non_yawed_corrected_results, results_uncorrected, CT_corr, CP_corr,
+                    CQ_corr, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades,
+                    plot_non_yawed_corrected, plot_non_yawed_comparison)
 
-# print(1)
+if plot_yawed:
+    n_psi = len(psi_vec)
+    results_yawed = {key: results_corrected[key] for key in yawed_keys}
+    results_to_add = results_corrected['yaw_0.0_TSR_8.0']
+    results_to_add['a'] = np.tile(results_to_add['a'], (1, n_psi))
+    results_to_add['a_line'] = np.tile(results_to_add['a'], (1, n_psi))
+    results_to_add['r_over_R'] = np.tile(results_to_add['r_over_R'], (1, n_psi))
+    results_to_add['normal_force'] = np.tile(results_to_add['normal_force'], (1, n_psi))
+    results_to_add['tangential_force'] = np.tile(results_to_add['tangential_force'], (1, n_psi))
+    results_to_add['gamma'] = np.tile(results_to_add['gamma'], (1, n_psi))
+    results_to_add['alpha'] = np.tile(results_to_add['alpha'], (1, n_psi))
+    results_to_add['inflow_angle'] = np.tile(results_to_add['inflow_angle'], (1, n_psi))
+    results_to_add['c_thrust'] = np.tile(results_to_add['c_thrust'], (1, n_psi))
+    results_to_add['c_torque'] = np.tile(results_to_add['c_torque'], (1, n_psi))
+    results_to_add['c_power'] = np.tile(results_to_add['c_power'], (1, n_psi))
+    results_yawed['yaw_0.0_TSR_8.0'] = results_to_add
+
+    variables_to_plot = ['alpha', 'inflow_angle', 'a', 'a_line', 'normal_force', 'tangential_force']
+    UDMs = ['[deg]', '[deg]', '[-]', '[-]', '[-]', '[-]']
+    plots_yawed(results_yawed, rotor_radius, yaw_angles, u_inf,
+                Omega[1], n_blades, centroids, psi_vec, variables_to_plot, UDMs)
+
+print(1)

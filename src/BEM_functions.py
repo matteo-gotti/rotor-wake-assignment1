@@ -1,7 +1,6 @@
 # import necessary libraries
 import numpy as np
 import math
-from mpmath import sec
 
 
 def compute_c_t(a, apply_glauert_correction=False):
@@ -200,6 +199,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     iterations = i + 1
 
     if yaw_angle != 0:
+        yaw_angle = np.radians(yaw_angle)
         dpsi = psi_vec[1:] - psi_vec[:-1]
         dpsi = np.append(dpsi, dpsi[-1])
 
@@ -215,26 +215,23 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
 
         for i, psi in enumerate(psi_vec):
             wake_skew_angle = (0.6*a_new + 1) * yaw_angle
-            a_skew = 2 * math.tan(wake_skew_angle/2) * r_over_R * math.sin(psi)
-            a_new = a_new + a_skew
-            a_line_skew = 1/r_over_R * 1/tip_radius_over_R * \
-                math.sin(psi) * math.sin(yaw_angle)
-            a_line_new = a_line_new + a_line_skew
+            a_tot = a_new * (1 + 2 * math.tan(wake_skew_angle/2) * r_over_R * math.sin(psi))
+            a_line_tot = a_line_new + 1/r_over_R * 1/tip_speed_ratio * math.sin(yaw_angle * math.sin(psi))
 
             # correct new axial induction with Prandtl's correction
             prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
-                r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_new)
+                r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_tot)
             if prandtl < 0.0001:
                 prandtl = 0.0001   # avoid divide by zero
             # correct estimate of axial induction
-            a_corrected[i] = a_new / prandtl
+            a_corrected[i] = a_tot / prandtl
             # correct estimate of azimuthal induction
-            a_line_corrected[i] = a_line_new / prandtl
+            a_line_corrected[i] = a_line_tot / prandtl
 
             c_t = 4 * a_corrected[i] * \
-                (1 - a_corrected[i]*(2*math.cos(yaw_angle - a)))
-            c_p = c_t * (math.cos(yaw_angle) - a)
-            c_q = 4 * a_line_corrected[i] * (1 - a) * r_over_R * tip_speed_ratio * (
+                (1 - a_corrected[i]*(2*math.cos(yaw_angle - a_corrected[i])))
+            c_p = c_t * (math.cos(yaw_angle) - a_corrected[i])
+            c_q = 4 * a_line_corrected[i] * (1 - a_corrected[i]) * r_over_R * tip_speed_ratio * (
                 math.cos(psi)**2 + (math.cos(wake_skew_angle)**2) * (math.sin(psi))**2)
             normal_force[i] = c_t * 0.5 * u_inf**2 * np.pi * \
                 rotor_R**2 * dr * dpsi[i] * r_over_R * rotor_R
