@@ -132,7 +132,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
         plt.figure()
         colormap = cm.get_cmap('viridis', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
-            c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force'] / (0.5 * u_inf**2 * rotor_radius)
+            c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
             color = colormap(i)
@@ -147,7 +147,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
         plt.figure()
         colormap = cm.get_cmap('viridis', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
-            c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
+            c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
             color = colormap(i)
@@ -262,8 +262,8 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
 
         # ----Spanwise distribution of normal loading-----------------------------------------------------
         plt.figure()
-        c_t_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force'] / (0.5 * u_inf**2 * rotor_radius)
-        c_t_uncorr = uncorrected_results['normal_force'] / (0.5 * u_inf**2 * rotor_radius)
+        c_t_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
+        c_t_uncorr = uncorrected_results['normal_force']
         plt.plot(r_R_corr, c_t_corr, color=colormap(0), label=f'with Pradtl correction')
         plt.plot(r_R_uncorr, c_t_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -274,8 +274,8 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
 
         # ----Spanwise distribution of tangential loading-----------------------------------------------------
         plt.figure()
-        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
-        c_q_uncorr = uncorrected_results['tangential_force'] / (0.5 * u_inf**2 * rotor_radius)
+        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force']
+        c_q_uncorr = uncorrected_results['tangential_force']
         plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
         plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -310,8 +310,8 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
 
         # ----Spanwise distribution of circulation------------------------------------------------------------------------------
         plt.figure()
-        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma'] / (np.pi * u_inf**2 / (n_blades * Omega[1]))
-        c_q_uncorr = uncorrected_results['gamma'] / (np.pi * u_inf**2 / (n_blades * Omega[1]))
+        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma']
+        c_q_uncorr = uncorrected_results['gamma']
         plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
         plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
