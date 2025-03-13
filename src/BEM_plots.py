@@ -204,22 +204,6 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
 
         plt.show()
 
-    # ----CP, CQ, CT vs TSR------------------------------------------------------------------------------
-    # fig_CP_CQ_CT = plt.figure()
-    # colormap = cm.get_cmap('viridis', n_tsr)
-    # for i, TSR in enumerate(tip_speed_ratios):
-    #     color = colormap(0)
-    #     plt.plot(TSR, CP[f'yaw_0.0_TSR_{TSR}'], color=color, label=f'TSR={TSR}', linestyle='-')
-    #     plt.plot(TSR, CT[f'yaw_0.0_TSR_{TSR}'], color=color, label=f'TSR={TSR}', linestyle='--')
-    #     plt.plot(TSR, CQ[f'yaw_0.0_TSR_{TSR}'], color=color, label=f'TSR={TSR}', linestyle=':')
-
-    # plt.xlabel(r'$\frac{r}{R} [-]$')
-    # plt.ylabel('Inflow Angle (degrees)')
-    # # plt.title('Inflow angle vs r/R')
-    # plt.grid(True)
-    # plt.legend()
-    # plt.show()
-
     # ----Comparison between corrected and uncorrected results------------------------------------------------
     if plot_comparison:
         TSR = tip_speed_ratios[1]
