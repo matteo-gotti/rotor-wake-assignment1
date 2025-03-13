@@ -37,9 +37,9 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
-plot_yawed = False    # plot the results for the yawed case with Prandtl correction
+plot_yawed = True    # plot the results for the yawed case with Prandtl correction
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
 n_blades = 3  # number of blades [-]

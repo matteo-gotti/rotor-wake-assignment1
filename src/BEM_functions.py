@@ -230,7 +230,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         inflow_angle = np.degrees(inflow_angle)
 
     normal_force = normal_force / (0.5 * u_inf**2 * rotor_R)
-    tangential_force = normal_force / (0.5 * u_inf**2 * rotor_R)
+    tangential_force = tangential_force / (0.5 * u_inf**2 * rotor_R)
     gamma = gamma / (np.pi * u_inf**2 / (blades_number * omega))
 
     return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, iterations
