@@ -58,8 +58,8 @@ for j in range(len(number_of_annuli)):
     CT_cosine[j] = np.sum(dr_cosine * current_result_cosine['normal_force'] *
                           (0.5 * u_inf**2 * rotor_radius) * n_blades) / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2)
 
-rel_error_cosine = np.abs(CT_cosine[1:] - CT_cosine[0:-1]) / CT_cosine[0:-1]
-rel_error_uniform = np.abs(CT_uniform[1:] - CT_uniform[0:-1]) / CT_uniform[0:-1]
+rel_error_cosine = np.abs(CT_cosine[1:] - CT_cosine[-1]) / CT_cosine[-1]
+rel_error_uniform = np.abs(CT_uniform[1:] - CT_uniform[-1]) / CT_uniform[-1]
 
 # ----Plot results-------------------------------------------------------------------------------------------
 plot_mesh_convergence(number_of_annuli, CT_uniform, CT_cosine, rel_error_uniform, rel_error_cosine)
