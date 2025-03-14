@@ -335,7 +335,7 @@ def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_ove
         if var not in results['yaw_0.0_TSR_8.0']:
             raise ValueError(f'Variable {var} not found in results')
 
-        fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(14, 6))
+        fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(19, 5))
         colormap = plt.get_cmap('viridis')
 
         vmax = max([np.max(np.array(results[f'yaw_{yaw}_TSR_8.0'][var])) for yaw in yaw_angles])
@@ -345,13 +345,19 @@ def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_ove
             key = f'yaw_{yaw_angles[j]}_TSR_8.0'
             Y = np.array(results[key][var]).T
             c = ax.contourf(Psi, R, Y, levels=30, cmap=colormap, vmin=vmin, vmax=vmax)
+
             ax.set_title(f'Yaw angle {yaw_angles[j]}°', fontsize=14, pad=30)
             ax.set_yticklabels([])
             ax.grid(True)
-        cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
-        cb = fig.colorbar(c, cax=cbar_ax, orientation='horizontal')
-        cb.set_label(labels[i], fontsize=12)
+            # Add a colorbar for each subplot
+            cbar = fig.colorbar(c, ax=ax, orientation='vertical', fraction=0.04, pad=0.1)
+            cbar.set_label(labels[i], fontsize=10)
+            cbar.ax.tick_params(axis='y', labelrotation=45)  # Adjust angle as needed
+        # cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
+        # cb = fig.colorbar(c, cax=cbar_ax, orientation='horizontal')
+        # cb.set_label(labels[i], fontsize=12)
         fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.92, wspace=0.3)
+        # plt.subplots_adjust(left=0.05, right=0.85, bottom=0.15, top=0.92, wspace=0.2)
 
     plt.show()
 

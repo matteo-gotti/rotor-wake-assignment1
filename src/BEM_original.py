@@ -122,14 +122,19 @@ CQ_corr = {}
 dr = np.array([(r_over_R[1:] - r_over_R[:-1]) * rotor_radius]).T
 for j, tip_speed_ratio in enumerate(tip_speed_ratios):
     key = non_yawed_keys[j]
-    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] * n_blades) / \
+    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] * (0.5 * u_inf**2 * rotor_radius) * n_blades) / \
         (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2)
-    CP_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * results_corrected[key]['r_over_R']
+    CP_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * (0.5 * u_inf**2 * rotor_radius) * results_corrected[key]['r_over_R']
                           * n_blades * rotor_radius * Omega[j] / (0.5 * u_inf ** 3 * np.pi * rotor_radius ** 2))
-    CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * n_blades
+    CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * (0.5 * u_inf**2 * rotor_radius) * n_blades
                           / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
 
-# ----Solve BEM model for non-corrected case TSR = 8, yaw_angle = 0-------------------------------------------
+# -----Compute CT, CP, CQ for yawed corrected case------------------------------------------------------------
+# dpsi = (psi_vec[1:] - psi_vec[:-1])
+# dpsi = np.append(dpsi, dpsi[-1])
+# CT_yawed =
+
+# ----Solve BEM model for non-corrected non-yawed case TSR = 8, yaw_angle = 0---------------------------------
 results_uncorrected = BEM_cycle(
     u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[1], rotor_radius, n_blades,
     chord_distribution, twist_distribution, 0.0, 8, polar_alpha, polar_cl, polar_cd, prandtl_correction=False)
