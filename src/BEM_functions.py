@@ -11,7 +11,7 @@ def compute_c_t(a, apply_glauert_correction=False):
     if apply_glauert_correction:
         CT1 = 1.816
         a1 = 1 - np.sqrt(CT1) / 2
-        if type(a) is np.float64:
+        if type(a) is np.float64 or type(a) is np.float32 or type(a) is int or type(a) is float:
             if a > a1:
                 c_t = CT1 - 4 * (np.sqrt(CT1) - 1) * (1 - a)
         else:
@@ -86,7 +86,7 @@ def BEM_cycle(u_inf, r_over_R, root_radius_over_R, tip_radius_over_R, omega, rot
     else:
         n_psi = len(psi_vec)
 
-    max_iterations = 100
+    max_iterations = 200
     results = {}
 
     results = {
@@ -102,15 +102,17 @@ def BEM_cycle(u_inf, r_over_R, root_radius_over_R, tip_radius_over_R, omega, rot
         'c_torque': np.zeros([n_annuli, n_psi], dtype=float),
         'c_power': np.zeros([n_annuli, n_psi], dtype=float),
         'psi': 0 if yaw_angle == 0 else psi_vec,
-        'c_thrust_iterations': np.zeros([n_annuli, n_psi, max_iterations], dtype=float)
     }
     centroids = (r_over_R[1:] + r_over_R[:-1]) / 2
+    print('--------------------------------------------------------------------------------------------------')
+    print(
+        f'----Starting BEM cycle for {n_annuli} annuli TSR = {tip_speed_ratio}, yaw = {yaw_angle}---------------------------------')
     for i in range(len(r_over_R) - 1):
         chord = np.interp(
             (r_over_R[i] + r_over_R[i + 1]) / 2, r_over_R, chord_distribution)
         twist = np.interp(
             (r_over_R[i] + r_over_R[i + 1]) / 2, r_over_R, twist_distribution)
-        a, a_line, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, n_iterations = solve_stream_tube(
+        a, a_line, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p = solve_stream_tube(
             u_inf, r_over_R[i], r_over_R[i + 1], root_radius_over_R, tip_radius_over_R, omega, rotor_R,
             blades_number, chord, twist, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, max_iterations, psi_vec, prandtl_correction)
 
@@ -125,7 +127,8 @@ def BEM_cycle(u_inf, r_over_R, root_radius_over_R, tip_radius_over_R, omega, rot
         results['c_thrust'][i, :] = c_t
         results['c_torque'][i, :] = c_q
         results['c_power'][i, :] = c_p
-        results['c_thrust_iterations'][i, :, :] = c_t_iterations
+    print(f'----Finished Current BEM cycle--------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------------------------')
 
     return results
 
@@ -151,14 +154,14 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     normal_force = np.nan
     tangential_force = np.nan
     gamma = np.nan
-    a = 0.0  # axial induction
-    a_line = 0.0  # tangential induction factor
-    error_iterations = 0.00001  # error limit for iteration process, in absolute value of induction
-    c_t_iterations = np.empty(max_iterations)
-
-    for i in range(max_iterations):
-        u_rotor = u_inf * (1 - a)  # axial velocity at rotor
-        u_tangential = (1 + a_line) * omega * r_over_R * rotor_R  # tangential velocity at rotor
+    a_old = 0.3  # axial induction
+    a_line_old = 0.01  # tangential induction factor
+    rel_error_iterations = 1e-6  # error limit for iteration process, in absolute value of induction
+    it = 0  # iteration counter
+    rel_error = 1  # relative error
+    while it < max_iterations and a_old != 0.95 and a_line_old != 0 and rel_error > rel_error_iterations:
+        u_rotor = u_inf * (1 - a_old)  # axial velocity at rotor
+        u_tangential = (1 + a_line_old) * omega * r_over_R * rotor_R  # tangential velocity at rotor
 
         # calculate loads in blade segment in 2D (N/m)
         normal_force, tangential_force, gamma, alpha, inflow_angle = load_blade_element(
@@ -174,31 +177,42 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         if prandtl_correction:
             # correct new axial induction with Prandtl's correction
             prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
-                r_over_R, root_radius_over_R, tip_radius_over_R, omega * rotor_R / u_inf, blades_number, a_new)
-            if prandtl < 0.0001:
-                prandtl = 0.0001  # avoid divide by zero
+                r_over_R, root_radius_over_R, tip_radius_over_R, tip_speed_ratio, blades_number, a_new)
+            if prandtl < 0.01:
+                prandtl = 0.01  # avoid divide by zero
         else:
             prandtl = 1.0
 
         a_corrected = a_new / prandtl  # correct estimate of axial induction
         # for improving convergence, weigh current and previous iteration of axial induction
-        a = 0.75 * a + 0.25 * a_corrected
-        c_t_iterations[i] = compute_c_t(a_corrected, apply_glauert_correction=True)
+        if a_corrected >= 0.95:
+            a_corrected = 0.95
+        elif a_corrected < 0:
+            a_corrected = 0.0
+
+        a_next_it = 0.75 * a_old + 0.25 * a_corrected
 
         # calculate azimuthal induction
         a_line_new = tangential_force * blades_number / \
-            (2 * np.pi * u_inf * (1 - a) * omega * 2 * (r_over_R * rotor_R) ** 2)
+            (2 * np.pi * u_inf * (1 - a_old) * omega * 2 * (r_over_R * rotor_R) ** 2)
         a_line_corrected = a_line_new / prandtl
-        a_line = 0.75 * a_line + 0.25 * a_line_corrected
+
+        if a_line_corrected >= 0.95:
+            a_line_corrected = 0.95
+        elif a_line_corrected < 0:
+            a_line_corrected = 0.0
+        a_line_next_it = 0.75 * a_line_old + 0.25 * a_line_corrected
 
         # test convergence of solution, by checking convergence of axial induction
-        if np.abs(a - a_corrected) < error_iterations and np.abs(a_line - a_line_corrected) < error_iterations:
-            break
+        rel_error = max(np.abs(a_old - a_next_it)/a_old, (a_line_old - a_line_next_it)/a_line_old)
+        a_old = a_next_it
+        a_line_old = a_line_next_it
+        it += 1
+
     c_t = compute_c_t(a_corrected, apply_glauert_correction=True)
     c_q = 4 * a_line_corrected * (1 - a_corrected) * r_over_R * tip_speed_ratio
     c_p = c_t * (1 - a_corrected)
     inflow_angle = np.degrees(inflow_angle)
-    iterations = i + 1
 
     if yaw_angle != 0:
         yaw_angle = np.radians(yaw_angle)
@@ -220,7 +234,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
 
         c_t = 4 * a_corrected * np.sqrt((1 - a_corrected*(2*np.cos(yaw_angle) - a_corrected)))
         c_p = c_t * (np.cos(yaw_angle) - a_corrected)
-        c_q = 4 * a_line_corrected[i] * (np.cos(yaw_angle) - a_corrected[i]) * r_over_R * tip_speed_ratio * (
+        c_q = 4 * a_line_corrected[it] * (np.cos(yaw_angle) - a_corrected[it]) * r_over_R * tip_speed_ratio * (
             np.cos(psi_vec)**2 + (np.cos(wake_skew_angle)**2) * (np.sin(psi_vec))**2)
 
         v_tan = omega*r_over_R*rotor_R*(1 + a_line_corrected)
@@ -233,4 +247,9 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     tangential_force = tangential_force / (0.5 * u_inf**2 * rotor_R)
     gamma = gamma / (np.pi * u_inf**2 / (blades_number * omega))
 
-    return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_iterations, iterations
+    if it == max_iterations - 1:
+        print(
+            f'Annulus at r/R = {r_over_R:.2f} did not converge, current error is {np.abs(a_old - a_next_it)/a_old:.2e}')
+    print(f'Annulus at r/R = {r_over_R:.2f} converged in {it + 1} iterations')
+
+    return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p

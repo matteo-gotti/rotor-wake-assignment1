@@ -65,8 +65,7 @@ def plot_polar_data(polar_alpha, polar_cl, polar_cd):
     return fig
 
 
-def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_speed_ratios, u_inf,
-                    Omega, n_blades, plot_corrected=True, plot_comparison=True):
+def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, plot_corrected=True, plot_comparison=True):
     n_tsr = len(tip_speed_ratios)
     # ----Spanwise distribution of angle of attack------------------------------------------------------------
 
@@ -325,7 +324,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, rotor_radius, tip_sp
     return
 
 
-def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_over_R, psi, variables_to_plot, labels):
+def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
 
     if len(variables_to_plot) != len(labels):
         raise ValueError('The number of variables to plot must match the number of labels')
@@ -359,6 +358,29 @@ def plots_yawed(results, rotor_radius, yaw_angles, u_inf, Omega, n_blades, r_ove
         fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.92, wspace=0.3)
         # plt.subplots_adjust(left=0.05, right=0.85, bottom=0.15, top=0.92, wspace=0.2)
 
+    plt.show()
+
+    return
+
+
+def plot_mesh_convergence(number_of_annuli_vec, CT_uniform, CT_cosine, rel_error_uniform, rel_error_cosine):
+    plt.figure()
+    plt.plot(number_of_annuli_vec, CT_uniform, 'k-', label='Uniform')
+    plt.plot(number_of_annuli_vec, CT_cosine, 'k--', label='Cosine')
+    plt.xlabel('Number of annuli [-]')
+    plt.ylabel('$C_T$ [-]')
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    plt.figure()
+    plt.loglog(number_of_annuli_vec[0:-1], rel_error_uniform, 'k-', label='Uniform')
+    plt.loglog(number_of_annuli_vec[0:-1], rel_error_cosine, 'k--', label='Cosine')
+    plt.loglog(number_of_annuli_vec[0:-1], 1e-4 * np.ones(len(number_of_annuli_vec[0:-1])), 'r:', label='Threshold')
+    plt.xlabel('Number of annuli [-]')
+    plt.ylabel('Relative error between two iterations[-]')
+    plt.grid()
+    plt.legend()
     plt.show()
 
     return

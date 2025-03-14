@@ -37,19 +37,26 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
-plot_yawed = True    # plot the results for the yawed case with Prandtl correction
+plot_yawed = False    # plot the results for the yawed case with Prandtl correction
+
+# ----Discretization method-----------------------------------------------------------------------------------
+is_cosine_spacing = True  # True: cosine spacing False: uniform spacing
+number_of_annuli = 80  # number of annuli [-]
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
 n_blades = 3  # number of blades [-]
-# location of the blade root divided by blade radius [-]
-root_location_over_R = 0.2
-# location of the blade tip divided by blade radius [-]
-tip_location_over_R = 1
-delta_r_over_R = 0.01  # length of each annulus divided by blade radius [-]
-r_over_R = np.arange(root_location_over_R, tip_location_over_R + delta_r_over_R/2,
-                     delta_r_over_R)  # location of each annulus divided by blade radius [-]
+root_location_over_R = 0.2  # location of the blade root divided by blade radius [-]
+tip_location_over_R = 1  # location of the blade tip divided by blade radius [-]
+
+if is_cosine_spacing:
+    i = np.arange(0, number_of_annuli + 1)
+    r_over_R = (tip_location_over_R + root_location_over_R)/2 + (tip_location_over_R -
+                                                                 root_location_over_R)/2 * np.cos((max(i) - i) * np.pi/max(i))
+else:
+    r_over_R = np.linspace(root_location_over_R, tip_location_over_R, number_of_annuli + 1)
+
 airfoil_data_path = os.path.join(os.path.dirname(__file__), "..", "data", "DU95W180.cvs")
 delta_psi = 0.01  # azimuthal discretization step [rad]
 psi_vec = np.arange(0, 2 * np.pi, delta_psi)  # azimuthal discretization [rad]
@@ -122,8 +129,8 @@ CQ_corr = {}
 dr = np.array([(r_over_R[1:] - r_over_R[:-1]) * rotor_radius]).T
 for j, tip_speed_ratio in enumerate(tip_speed_ratios):
     key = non_yawed_keys[j]
-    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] * (0.5 * u_inf**2 * rotor_radius) * n_blades) / \
-        (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2)
+    CT_corr[key] = np.sum(dr * results_corrected[key]['normal_force'] * (0.5 * u_inf**2 *
+                          rotor_radius) * n_blades) / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2)
     CP_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * (0.5 * u_inf**2 * rotor_radius) * results_corrected[key]['r_over_R']
                           * n_blades * rotor_radius * Omega[j] / (0.5 * u_inf ** 3 * np.pi * rotor_radius ** 2))
     CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * (0.5 * u_inf**2 * rotor_radius) * n_blades
@@ -144,7 +151,7 @@ n_tsr = len(tip_speed_ratios)
 n_yaw = len(yaw_angles)
 centroids = (r_over_R[1:] + r_over_R[:-1]) / 2
 if plot_non_yawed_corrected or plot_non_yawed_comparison:
-    plots_non_yawed(non_yawed_corrected_results, results_uncorrected, rotor_radius, tip_speed_ratios, u_inf, Omega, n_blades,
+    plots_non_yawed(non_yawed_corrected_results, results_uncorrected, tip_speed_ratios,
                     plot_non_yawed_corrected, plot_non_yawed_comparison)
 
 if plot_yawed:
@@ -168,7 +175,6 @@ if plot_yawed:
                          'normal_force', 'tangential_force', 'c_thrust', 'c_torque', 'c_power']
     labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r"$a'$ [-]",
               r'$C_n$ [-]', r'$C_t$ [-]', r'$C_T$ [-]', r'$C_Q$ [-]', r'$C_P$ [-]']
-    plots_yawed(results_yawed, rotor_radius, yaw_angles, u_inf,
-                Omega[1], n_blades, centroids, psi_vec, variables_to_plot, labels)
+    plots_yawed(results_yawed, yaw_angles, centroids, psi_vec, variables_to_plot, labels)
 
 print('Done')
