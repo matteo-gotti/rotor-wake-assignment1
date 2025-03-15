@@ -2,7 +2,6 @@
 from BEM_functions import *
 from BEM_plots import *
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 
 """
@@ -37,12 +36,12 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
-plot_yawed = False    # plot the results for the yawed case with Prandtl correction
+plot_yawed = True    # plot the results for the yawed case with Prandtl correction
 
 # ----Discretization method-----------------------------------------------------------------------------------
-is_cosine_spacing = True  # True: cosine spacing False: uniform spacing
+is_cosine_spacing = False  # True: cosine spacing False: uniform spacing
 number_of_annuli = 80  # number of annuli [-]
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
@@ -172,9 +171,9 @@ if plot_yawed:
     results_yawed['yaw_0.0_TSR_8.0'] = results_to_add
 
     variables_to_plot = ['alpha', 'inflow_angle', 'a', 'a_line',
-                         'normal_force', 'tangential_force', 'c_thrust', 'c_torque', 'c_power']
+                         'normal_force', 'tangential_force', 'gamma']
     labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r"$a'$ [-]",
-              r'$C_n$ [-]', r'$C_t$ [-]', r'$C_T$ [-]', r'$C_Q$ [-]', r'$C_P$ [-]']
+              r'$C_n$ [-]', r'$C_t$ [-]', r'$\Gamma$ [-]']
     plots_yawed(results_yawed, yaw_angles, centroids, psi_vec, variables_to_plot, labels)
 
 print('Done')

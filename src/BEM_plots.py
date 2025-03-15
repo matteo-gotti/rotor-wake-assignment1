@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from BEM_functions import *
 import numpy as np
 import matplotlib.cm as cm
+from matplotlib.ticker import FormatStrFormatter
 
 
 def plot_glauert_correction():
@@ -334,7 +335,7 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
         if var not in results['yaw_0.0_TSR_8.0']:
             raise ValueError(f'Variable {var} not found in results')
 
-        fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(19, 5))
+        fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(19, 6))
         colormap = plt.get_cmap('viridis')
 
         vmax = max([np.max(np.array(results[f'yaw_{yaw}_TSR_8.0'][var])) for yaw in yaw_angles])
@@ -345,13 +346,18 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
             Y = np.array(results[key][var]).T
             c = ax.contourf(Psi, R, Y, levels=30, cmap=colormap, vmin=vmin, vmax=vmax)
 
-            ax.set_title(f'Yaw angle {yaw_angles[j]}°', fontsize=14, pad=30)
+            ax.set_title(r'$\Theta$ = ' + f'{int(yaw_angles[j])} deg', fontsize=12, pad=30)
             ax.set_yticklabels([])
             ax.grid(True)
             # Add a colorbar for each subplot
-            cbar = fig.colorbar(c, ax=ax, orientation='vertical', fraction=0.04, pad=0.1)
-            cbar.set_label(labels[i], fontsize=10)
+            cbar = fig.colorbar(c, ax=ax, orientation='horizontal', fraction=0.04, pad=0.1)
+            cbar.set_label(labels[i], fontsize=12)
             cbar.ax.tick_params(axis='y', labelrotation=45)  # Adjust angle as needed
+
+            if var == 'alpha' or var == 'inflow_angle':
+                cbar.formatter = FormatStrFormatter('%.0f')
+            else:
+                cbar.formatter = FormatStrFormatter('%.2f')
         # cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
         # cb = fig.colorbar(c, cax=cbar_ax, orientation='horizontal')
         # cb.set_label(labels[i], fontsize=12)
@@ -367,7 +373,7 @@ def plot_mesh_convergence(number_of_annuli_vec, CT_uniform, CT_cosine, rel_error
     plt.figure()
     plt.plot(number_of_annuli_vec, CT_uniform, 'k-', label='Uniform')
     plt.plot(number_of_annuli_vec, CT_cosine, 'k--', label='Cosine')
-    plt.xlabel('Number of annuli [-]')
+    plt.xlabel('N [-]')
     plt.ylabel('$C_T$ [-]')
     plt.grid()
     plt.legend()
@@ -377,8 +383,8 @@ def plot_mesh_convergence(number_of_annuli_vec, CT_uniform, CT_cosine, rel_error
     plt.loglog(number_of_annuli_vec[0:-1], rel_error_uniform, 'k-', label='Uniform')
     plt.loglog(number_of_annuli_vec[0:-1], rel_error_cosine, 'k--', label='Cosine')
     plt.loglog(number_of_annuli_vec[0:-1], 1e-4 * np.ones(len(number_of_annuli_vec[0:-1])), 'r:', label='Threshold')
-    plt.xlabel('Number of annuli [-]')
-    plt.ylabel('Relative error between two iterations[-]')
+    plt.xlabel('N [-]')
+    plt.ylabel(r'$e_{rel}$ [-]')
     plt.grid()
     plt.legend()
     plt.show()
