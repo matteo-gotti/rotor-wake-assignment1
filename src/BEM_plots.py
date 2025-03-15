@@ -358,7 +358,14 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
                 cbar.formatter = FormatStrFormatter('%.0f')
             else:
                 cbar.formatter = FormatStrFormatter('%.2f')
-        # cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
+
+            grid_lines = ax.get_yticks()  # Get grid circle positions
+            angle = np.deg2rad(315)  # 45 degrees in radians
+            for r in grid_lines:
+                if not np.isclose(r, 1.0):  # Skip plotting if the value is 1
+                    ax.text(angle, r, f'{r:.1f}', fontsize=10, ha='center',
+                            va='center', color='white', alpha=1)
+                    # cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
         # cb = fig.colorbar(c, cax=cbar_ax, orientation='horizontal')
         # cb.set_label(labels[i], fontsize=12)
         fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.92, wspace=0.3)
