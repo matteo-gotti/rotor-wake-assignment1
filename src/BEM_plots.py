@@ -350,10 +350,8 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
             ax.set_title(r'$\Theta$ = ' + f'{int(yaw_angles[j])} deg', fontsize=12, pad=30)
             ax.set_yticklabels([])
             ax.grid(True)
-            # Add a colorbar for each subplot
             cbar = fig.colorbar(c, ax=ax, orientation='horizontal', fraction=0.04, pad=0.1)
             cbar.set_label(labels[i], fontsize=12)
-            cbar.ax.tick_params(axis='y', labelrotation=45)  # Adjust angle as needed
 
             if var == 'alpha' or var == 'inflow_angle':
                 cbar.formatter = FormatStrFormatter('%.0f')
@@ -366,11 +364,8 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
                 if not np.isclose(r, 1.0):  # Skip plotting if the value is 1
                     ax.text(angle, r, f'{r:.1f}', fontsize=10, ha='center',
                             va='center', color='white', alpha=1)
-                    # cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
-        # cb = fig.colorbar(c, cax=cbar_ax, orientation='horizontal')
-        # cb.set_label(labels[i], fontsize=12)
+
         fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.92, wspace=0.3)
-        # plt.subplots_adjust(left=0.05, right=0.85, bottom=0.15, top=0.92, wspace=0.2)
 
     plt.show()
 
