@@ -26,7 +26,7 @@ def plot_glauert_correction():
 def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratio, n_blades):
     a = np.zeros(np.shape(r_over_R)) + 0.3
     n_tsr = 1 if type(tip_speed_ratio) is np.float64 else len(tip_speed_ratio)
-    colormap = cm.get_cmap('viridis', n_tsr)
+    colormap = cm.get_cmap('turbo', n_tsr)
     fig = plt.figure(figsize=(12, 6))
 
     if n_tsr == 1:
@@ -72,7 +72,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
     if plot_corrected:
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             alpha = corrected_results[f'yaw_0.0_TSR_{TSR}']['alpha']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -86,7 +86,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of inflow angle---------------------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             inflow_angle = corrected_results[f'yaw_0.0_TSR_{TSR}']['inflow_angle']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -100,7 +100,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of axial induction factor-----------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             a = corrected_results[f'yaw_0.0_TSR_{TSR}']['a']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -115,7 +115,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of axial induction factor-----------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             a_line = corrected_results[f'yaw_0.0_TSR_{TSR}']['a_line']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -130,7 +130,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of normal loading-----------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -145,7 +145,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of tangential loading-----------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -160,7 +160,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of CT-----------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             c_T = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_thrust']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -174,7 +174,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of CQ-----------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             c_Q = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_torque']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -189,7 +189,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of circulation------------------------------------------------------------------------------
         plt.figure()
-        colormap = cm.get_cmap('viridis', n_tsr)
+        colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
             c_q = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
@@ -210,7 +210,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         r_R_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
         r_R_uncorr = uncorrected_results['r_over_R']
         TSR = tip_speed_ratios[1]
-        colormap = cm.get_cmap('viridis', 2)
+        colormap = cm.get_cmap('brg', 2)
 
     # ----Spanwise distribution of angle of attack------------------------------------------------------------
         plt.figure()
@@ -336,7 +336,8 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
             raise ValueError(f'Variable {var} not found in results')
 
         fig, axs = plt.subplots(1, n_yaw, subplot_kw=dict(polar=True), figsize=(19, 6))
-        colormap = plt.get_cmap('viridis')
+        colormap = plt.get_cmap('RdBu')
+        # colormap = plt.get_cmap('turbo')
 
         vmax = max([np.max(np.array(results[f'yaw_{yaw}_TSR_8.0'][var])) for yaw in yaw_angles])
         vmin = min([np.min(np.array(results[f'yaw_{yaw}_TSR_8.0'][var])) for yaw in yaw_angles])

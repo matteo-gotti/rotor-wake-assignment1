@@ -36,25 +36,18 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
-plot_yawed = True    # plot the results for the yawed case with Prandtl correction
+plot_yawed = False    # plot the results for the yawed case with Prandtl correction
 
-# ----Discretization method-----------------------------------------------------------------------------------
-is_cosine_spacing = False  # True: cosine spacing False: uniform spacing
+# ----Discretization -----------------------------------------------------------------------------------
 number_of_annuli = 80  # number of annuli [-]
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
 n_blades = 3  # number of blades [-]
 root_location_over_R = 0.2  # location of the blade root divided by blade radius [-]
 tip_location_over_R = 1  # location of the blade tip divided by blade radius [-]
-
-if is_cosine_spacing:
-    i = np.arange(0, number_of_annuli + 1)
-    r_over_R = (tip_location_over_R + root_location_over_R)/2 + (tip_location_over_R -
-                                                                 root_location_over_R)/2 * np.cos((max(i) - i) * np.pi/max(i))
-else:
-    r_over_R = np.linspace(root_location_over_R, tip_location_over_R, number_of_annuli + 1)
+r_over_R = np.linspace(root_location_over_R, tip_location_over_R, number_of_annuli + 1)
 
 airfoil_data_path = os.path.join(os.path.dirname(__file__), "..", "data", "DU95W180.cvs")
 delta_psi = 0.01  # azimuthal discretization step [rad]
