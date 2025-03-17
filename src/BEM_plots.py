@@ -398,30 +398,15 @@ def plot_mesh_convergence(number_of_annuli_vec, CT_uniform, CT_cosine, rel_error
 
 def plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor):
     # Define the stations
-    titles = ["Infinity Upstream", "Rotor Upstream", "Rotor Downstream", "Infinity Downstream"]
-    num_stations = len(titles)
-
-    # Create a polar grid
-    theta = np.linspace(0, 2*np.pi, 100)  # Azimuthal angle (constant behavior)
-    r = centroids  # Radial positions
-    Theta, R = np.meshgrid(r, theta)
-
-    # Define pressure distributions
-    P_tot_discs = [p_tot, p_tot, p_tot_behind_rotor, p_tot_behind_rotor]
-
-    # Set up figure with 4 subplots
-    fig, axes = plt.subplots(2, 2, subplot_kw={'projection': 'polar'}, figsize=(10, 8))
-    axes = axes.flatten()
-
-    # Plot the 4 pressure distributions
-    for i in range(num_stations):
-        ax = axes[i]
-        c = ax.contourf(Theta, R, np.tile(np.array(P_tot_discs[i]), (len(theta), 1)), levels=50, cmap='viridis')
-        ax.set_title(titles[i])
-        fig.colorbar(c, ax=ax, orientation='vertical')
+    plt.figure()
+    plt.plot(centroids, p_tot, 'r-', label='Total pressure in front of rotor')
+    plt.plot(centroids, p_tot_behind_rotor, 'b-', label='Total pressure behind rotor')
+    plt.xlabel('N [-]')
+    plt.ylabel(r'$e_{rel}$ [-]')
+    plt.grid()
+    plt.legend()
 
     # Display the plot
-    plt.tight_layout()
     plt.show()
 
     return

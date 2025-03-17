@@ -142,7 +142,7 @@ results_uncorrected = BEM_cycle(
 # -----Plot results for non yawed case------------------------------------------------------------------------
 n_tsr = len(tip_speed_ratios)
 n_yaw = len(yaw_angles)
-centroids = (r_over_R[1:] + r_over_R[:-1]) / 2
+centroids = np.array((r_over_R[1:] + r_over_R[:-1]) / 2).reshape(-1, 1)
 if plot_non_yawed_corrected or plot_non_yawed_comparison:
     plots_non_yawed(non_yawed_corrected_results, results_uncorrected, tip_speed_ratios,
                     plot_non_yawed_corrected, plot_non_yawed_comparison)
@@ -171,13 +171,16 @@ if plot_yawed:
     plots_yawed(results_yawed, yaw_angles, centroids, psi_vec, variables_to_plot, labels)
 
 # -----Compute stagnation pressure for TSR = 8, yaw_angle = 0-------------------------------------------------
-p_tot = np.ones_like(centroids)
+p_tot = 101325 + (0.5 * u_inf**2) * np.ones_like(centroids)
 v_norm = u_inf * (1 - results_corrected['yaw_0.0_TSR_8.0']['a'])
-v_tan = Omega[1] * rotor_radius * (1 + results_corrected['yaw_0.0_TSR_8.0']['a_line'])
+v_tan = Omega[1] * results_corrected['yaw_0.0_TSR_8.0']['r_over_R'] * \
+    rotor_radius * (1 + results_corrected['yaw_0.0_TSR_8.0']['a_line'])
 dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
-    (results_corrected['yaw_0.0_TSR_8.0']['normal_force']/(2*np.pi*centroids*rotor_radius * dr))
+    (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] /
+     (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr))
 dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
-    (results_corrected['yaw_0.0_TSR_8.0']['tangential_force']/(2*np.pi*centroids*rotor_radius * dr) * v_tan/v_norm)
+    (results_corrected['yaw_0.0_TSR_8.0']['tangential_force'] /
+     (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr) * v_tan/v_norm)
 dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
 p_tot_behind_rotor = p_tot - dp_tot
 
