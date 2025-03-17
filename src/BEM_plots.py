@@ -401,8 +401,8 @@ def plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor):
     plt.figure()
     plt.plot(centroids, p_tot, 'r-', label='Total pressure in front of rotor')
     plt.plot(centroids, p_tot_behind_rotor, 'b-', label='Total pressure behind rotor')
-    plt.xlabel('N [-]')
-    plt.ylabel(r'$e_{rel}$ [-]')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$P_{tot}$ [-]')
     plt.grid()
     plt.legend()
 

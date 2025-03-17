@@ -178,10 +178,11 @@ v_tan = Omega[1] * results_corrected['yaw_0.0_TSR_8.0']['r_over_R'] * \
 dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
     (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] /
      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr))
-dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
-    (results_corrected['yaw_0.0_TSR_8.0']['tangential_force'] /
-     (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr) * v_tan/v_norm)
-dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
+# dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
+#     (results_corrected['yaw_0.0_TSR_8.0']['tangential_force'] /
+#      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr) * v_tan/v_norm)
+# dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
+dp_tot = dp_tot_behind_rotor_norm
 p_tot_behind_rotor = p_tot - dp_tot
 
 if plot_p_tot:
