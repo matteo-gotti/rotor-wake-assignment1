@@ -36,9 +36,10 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
 plot_yawed = False    # plot the results for the yawed case with Prandtl correction
+plot_p_tot = True    # plot the stagnation pressure distribution
 
 # ----Discretization -----------------------------------------------------------------------------------
 number_of_annuli = 80  # number of annuli [-]
@@ -168,5 +169,19 @@ if plot_yawed:
     labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r"$a'$ [-]",
               r'$C_n$ [-]', r'$C_t$ [-]', r'$\Gamma$ [-]']
     plots_yawed(results_yawed, yaw_angles, centroids, psi_vec, variables_to_plot, labels)
+
+# -----Compute stagnation pressure for TSR = 8, yaw_angle = 0-------------------------------------------------
+p_tot = np.ones_like(centroids)
+v_norm = u_inf * (1 - results_corrected['yaw_0.0_TSR_8.0']['a'])
+v_tan = Omega[1] * rotor_radius * (1 + results_corrected['yaw_0.0_TSR_8.0']['a_line'])
+dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
+    (results_corrected['yaw_0.0_TSR_8.0']['normal_force']/(2*np.pi*centroids*rotor_radius * dr))
+dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
+    (results_corrected['yaw_0.0_TSR_8.0']['tangential_force']/(2*np.pi*centroids*rotor_radius * dr) * v_tan/v_norm)
+dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
+p_tot_behind_rotor = p_tot - dp_tot
+
+if plot_p_tot:
+    plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor)
 
 print('Done')
