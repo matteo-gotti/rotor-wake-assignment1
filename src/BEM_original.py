@@ -139,6 +139,24 @@ results_uncorrected = BEM_cycle(
     u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[1], rotor_radius, n_blades,
     chord_distribution, twist_distribution, 0.0, 8, polar_alpha, polar_cl, polar_cd, prandtl_correction=False)
 
+# -----Compute stagnation pressure for TSR = 8, yaw_angle = 0-------------------------------------------------
+p_tot = 101325 + (0.5 * u_inf**2) * np.ones_like(results_corrected['yaw_0.0_TSR_8.0']['r_over_R'])
+v_norm = u_inf * (1 - results_corrected['yaw_0.0_TSR_8.0']['a'])
+v_tan = Omega[1] * results_corrected['yaw_0.0_TSR_8.0']['r_over_R'] * \
+    rotor_radius * (1 + results_corrected['yaw_0.0_TSR_8.0']['a_line'])
+dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
+    (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] /
+     (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr))
+# dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
+#     (results_corrected['yaw_0.0_TSR_8.0']['tangential_force'] /
+#      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr) * v_tan/v_norm)
+# dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
+dp_tot = dp_tot_behind_rotor_norm
+p_tot_behind_rotor = p_tot - dp_tot
+
+if plot_p_tot:
+    plot_polar_pressure_distribution(results_corrected['yaw_0.0_TSR_8.0']['r_over_R'], p_tot, p_tot_behind_rotor)
+
 # -----Plot results for non yawed case------------------------------------------------------------------------
 n_tsr = len(tip_speed_ratios)
 n_yaw = len(yaw_angles)
@@ -169,23 +187,5 @@ if plot_yawed:
     labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r"$a'$ [-]",
               r'$C_n$ [-]', r'$C_t$ [-]', r'$\Gamma$ [-]']
     plots_yawed(results_yawed, yaw_angles, centroids, psi_vec, variables_to_plot, labels)
-
-# -----Compute stagnation pressure for TSR = 8, yaw_angle = 0-------------------------------------------------
-p_tot = 101325 + (0.5 * u_inf**2) * np.ones_like(centroids)
-v_norm = u_inf * (1 - results_corrected['yaw_0.0_TSR_8.0']['a'])
-v_tan = Omega[1] * results_corrected['yaw_0.0_TSR_8.0']['r_over_R'] * \
-    rotor_radius * (1 + results_corrected['yaw_0.0_TSR_8.0']['a_line'])
-dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
-    (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] /
-     (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr))
-# dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
-#     (results_corrected['yaw_0.0_TSR_8.0']['tangential_force'] /
-#      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr) * v_tan/v_norm)
-# dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
-dp_tot = dp_tot_behind_rotor_norm
-p_tot_behind_rotor = p_tot - dp_tot
-
-if plot_p_tot:
-    plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor)
 
 print('Done')
