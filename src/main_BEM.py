@@ -5,33 +5,6 @@ import pandas as pd
 import os
 from blade_optimization import blade_optimization
 
-"""
-
-
-TODO:
-1. ADD POSSIBILITY OF NON-ZERO YAW
-2. ADD POSSIBILITY OF COMPUTING DIFFERENT TIP SPEED RATIOS
-3. For a given CT=0.75, change the pitch or the chord distribution or the twist distribution
-    in order to maximise the Cp in axial flow at tip speed ratio 8 (eight). You can choose your
-    own design approach. Compare with the expected result from actuator disk theory.
-    Discuss the rationale for your design, including the twist and chord distributions.
-4. Plots with explanation of results (alpha/inflow/a/a'/Ct/Cn/Cq vs r/R)
-        - Span-wise distribution of angle of attack and inflow angle
-        - Span-wise distribution of axial and azimuthal inductions
-        - Span-wise distribution of thrust and azimuthal loading
-        - Total thrust and torque versus tip-speed ratio/advance ratio
-        - For the cases of yawed rotor (optional), also plot the azimuthal variation (suggestion: polar contour plot)
-5. Plots with explanation of the influence of the tip correction
-6. (optional): Plots with explanation of influence of number of annuli, spacing method (constant, cosine)
-    and convergence history for total thrust.
-7. (optional): Explanation of the design approach used for maximizing the Cp or efficiency
-8. (optional): Plots with explanation of the new designs
-9. Plot the distribution of stagnation pressure as a function of radius at four locations: infinity upwind,
-    at the rotor (upwind side), at the rotor (downwind side), infinity downwind.
-10. (optional): Plot a representation of the system of circulation. Discuss the generation and release
-    of vorticity in relation to the loading and circulation over the blade.
-"""
-
 # ----Plotting flags------------------------------------------------------------------------------------------
 plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
