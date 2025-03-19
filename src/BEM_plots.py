@@ -53,22 +53,42 @@ def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R,
 
 
 def plot_polar_data(polar_alpha, polar_cl, polar_cd):
-    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+    # Compute efficiency (L/D ratio)
+    efficiency = polar_cl / polar_cd
+    max_idx = np.argmax(efficiency)
+
+    # Extract max efficiency values
+    alpha_maxE = polar_alpha[max_idx]
+    CL_maxE = polar_cl[max_idx]
+    CD_maxE = polar_cd[max_idx]
+
+    # Create plots
+    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+
+    # CL vs Alpha plot
     axs[0].plot(polar_alpha, polar_cl)
+    axs[0].scatter(alpha_maxE, CL_maxE, color='red', label="Max Efficiency", zorder=3)
     axs[0].set_xlim([-30, 30])
     axs[0].set_xlabel(r'$\alpha$ [deg]')
     axs[0].set_ylabel(r'$C_l$ [-]')
+    # axs[0].legend()
     axs[0].grid()
+
+    # CL vs CD (Drag Polar) plot
     axs[1].plot(polar_cd, polar_cl)
+    axs[1].scatter(CD_maxE, CL_maxE, color='red', label="Max Efficiency", zorder=3)
     axs[1].set_xlim([0, .1])
     axs[1].set_xlabel(r'$C_d$ [-]')
+    axs[1].set_ylabel(r'$C_l$ [-]')
+    axs[1].legend()
     axs[1].grid()
+
     plt.show()
 
     return fig
 
 
-def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, plot_corrected=True, plot_comparison=True):
+def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, polar_alpha, polar_cd, polar_cl, plot_corrected=True, plot_comparison=True):
     n_tsr = len(tip_speed_ratios)
     # ----Spanwise distribution of angle of attack------------------------------------------------------------
 
@@ -203,6 +223,21 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         # plt.title('Circulation vs r/R')
         plt.grid(True)
         plt.legend()
+
+        # ----Spanwise distribution of efficiency------------------------------------------------------------------------------
+        plt.figure()
+        efficiency = np.zeros_like(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']['r_over_R'])
+        for i, AoA in enumerate(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']['alpha']):
+            cl = np.interp(AoA, polar_alpha, polar_cl)
+            cd = np.interp(AoA, polar_alpha, polar_cd)
+            efficiency[i] = cl/cd
+
+        plt.plot(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']
+                 ['r_over_R'], efficiency, color=colormap(0))
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$E [-]$')
+        # plt.title('Circulation vs r/R')
+        plt.grid(True)
 
         plt.show()
 
@@ -544,7 +579,5 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
     # plt.title('Circulation vs r/R')
     plt.grid(True)
     plt.legend()
-
-    plt.show()
 
     return

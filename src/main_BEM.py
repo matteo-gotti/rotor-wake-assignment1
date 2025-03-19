@@ -10,14 +10,14 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
 plot_yawed = False    # plot the results for the yawed case with Prandtl correction
 plot_p_tot = False    # plot the stagnation pressure distribution
-plot_optimization_results = True    # plot the results of the blade optimization
+plot_optimization_results = False    # plot the results of the blade optimization
 
 # Flag for blade optimization
-perform_blade_optimization = True
+perform_blade_optimization = False
 
 # ----Discretization -----------------------------------------------------------------------------------
 number_of_annuli = 80  # number of annuli [-]
@@ -132,7 +132,7 @@ if perform_blade_optimization:
         CT_ref, polar_alpha, polar_cl, polar_cd, plot_contour=True)
     results_optim = BEM_cycle(
         u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[1], rotor_radius, n_blades,
-        optim_chord_distribution, optim_twist_distribution, 0.0, 8, polar_alpha, polar_cl, polar_cd)
+        optim_chord_distribution, optim_twist_distribution, 0.0, 8)
 
 # -----Plot stagnation pressure distribution------------------------------------------------------------------
 if plot_p_tot:
@@ -144,7 +144,7 @@ n_yaw = len(yaw_angles)
 centroids = np.array((r_over_R[1:] + r_over_R[:-1]) / 2).reshape(-1, 1)
 if plot_non_yawed_corrected or plot_non_yawed_comparison:
     plots_non_yawed(non_yawed_corrected_results, results_uncorrected, tip_speed_ratios,
-                    plot_non_yawed_corrected, plot_non_yawed_comparison)
+                    polar_alpha, polar_cd, polar_cl, plot_non_yawed_corrected, plot_non_yawed_comparison)
 
 # -----Plot results for yawed case----------------------------------------------------------------------------
 if plot_yawed:
@@ -173,6 +173,7 @@ if plot_yawed:
 # -----Plot optimization results-------------------------------------------------------------------------------
 if plot_optimization_results and perform_blade_optimization:
     plots_optimization(results_optim, optim_chord_distribution, optim_twist_distribution,
-                       chord_distribution, twist_distribution, results_corrected['yaw_0.0_TSR_8.0'], results_corrected['yaw_0.0_TSR_8.0']['r_over_R'], r_over_R)
+                       chord_distribution, twist_distribution, results_corrected['yaw_0.0_TSR_8.0'],
+                       results_corrected['yaw_0.0_TSR_8.0']['r_over_R'], r_over_R, polar_alpha, polar_cl, polar_cd)
 
 print('Done')
