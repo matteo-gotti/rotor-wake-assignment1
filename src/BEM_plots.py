@@ -419,8 +419,8 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
 
 # ----Spanwise distribution of angle of attack------------------------------------------------------------
     plt.figure()
-    alpha_opt = results_opt['alpha']
     alpha_orig = results_orig['alpha']
+    alpha_opt = results_opt['alpha']
     plt.plot(centroids, alpha_orig, color=colormap(0), label=f'Original')
     plt.plot(centroids, alpha_opt, color=colormap(1), label=f'Optimized')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -467,10 +467,10 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
 
     # ----Spanwise distribution of normal loading-----------------------------------------------------
     plt.figure()
-    c_n_corr = results_opt['normal_force']
-    c_n_uncorr = results_orig['normal_force']
-    plt.plot(centroids, c_n_corr, color=colormap(0), label=f'Original')
-    plt.plot(centroids, c_n_uncorr, color=colormap(1), label=f'Optimized')
+    c_n_orig = results_orig['normal_force']
+    c_n_opt = results_opt['normal_force']
+    plt.plot(centroids, c_n_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, c_n_opt, color=colormap(1), label=f'Optimized')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
     plt.ylabel(r'$C_n$ [-]')
     # plt.title('Normal force coefficient vs r/R')
@@ -479,8 +479,8 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
 
     # ----Spanwise distribution of tangential loading-----------------------------------------------------
     plt.figure()
-    c_t_orig = results_opt['tangential_force']
-    c_t_opt = results_orig['tangential_force']
+    c_t_orig = results_orig['tangential_force']
+    c_t_opt = results_opt['tangential_force']
     plt.plot(centroids, c_t_orig, color=colormap(0), label=f'Original')
     plt.plot(centroids, c_t_opt, color=colormap(1), label=f'Optimized')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -491,8 +491,8 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
 
     # ----Spanwise distribution of C_T-----------------------------------------------------
     plt.figure()
-    c_T_orig = results_opt['c_thrust']
-    c_T_opt = results_orig['c_thrust']
+    c_T_orig = results_orig['c_thrust']
+    c_T_opt = results_opt['c_thrust']
     plt.plot(centroids, c_T_orig, color=colormap(0), label=f'Original')
     plt.plot(centroids, c_T_opt, color=colormap(1), label=f'Optimized')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
@@ -503,8 +503,8 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
 
     # ----Spanwise distribution of C_Q-----------------------------------------------------
     plt.figure()
-    c_Q_orig = results_opt['c_torque']
-    c_Q_opt = results_orig['c_torque']
+    c_Q_orig = results_orig['c_torque']
+    c_Q_opt = results_opt['c_torque']
     plt.plot(centroids, c_Q_orig, color=colormap(0), label=f'Original')
     plt.plot(centroids, c_Q_opt, color=colormap(1), label=f'Optimized')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
