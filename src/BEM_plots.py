@@ -3,18 +3,18 @@ from BEM_functions import *
 import numpy as np
 import matplotlib.cm as cm
 from matplotlib.ticker import FormatStrFormatter
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def plot_glauert_correction():
     a = np.arange(0.0, 1.0, 0.01)
+    colormap = cm.get_cmap('brg', 3)
     c_t_uncorrected = compute_c_t(a)  # CT without correction
     c_t_glauert = compute_c_t(a, True)  # CT with Glauert's correction
 
     fig = plt.figure(figsize=(12, 6))
-    plt.plot(a, c_t_uncorrected, 'k-', label='$C_T$')
-    plt.plot(a, c_t_glauert, 'b--', label='$C_T$ Glauert')
-    plt.plot(a, c_t_glauert * (1 - a), 'g--', label='$C_P$ Glauert')
+    plt.plot(a, c_t_uncorrected, color=colormap(0), linestyle='-', label='$C_T$')
+    plt.plot(a, c_t_glauert, 'b--', color=colormap(1), linestyle='--', label='$C_T$ Glauert')
+    plt.plot(a, c_t_glauert * (1 - a), color=colormap(2), linestyle='--', label='$C_P$ Glauert')
     plt.xlabel(r'$a$ [-]')
     plt.ylabel(r'$C_T$ and $C_P$ [-]')
     plt.grid()
@@ -27,14 +27,14 @@ def plot_glauert_correction():
 def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratio, n_blades):
     a = np.zeros(np.shape(r_over_R)) + 0.3
     n_tsr = 1 if type(tip_speed_ratio) is np.float64 else len(tip_speed_ratio)
-    colormap = cm.get_cmap('turbo', n_tsr)
+    colormap = cm.get_cmap('brg', n_tsr)
     fig = plt.figure(figsize=(12, 6))
 
     if n_tsr == 1:
         prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
             r_over_R, root_location_over_R, tip_location_over_R, tip_speed_ratio, n_blades, a)
-        plt.plot(r_over_R, prandtl_tip, 'g.', label='Prandtl tip')
-        plt.plot(r_over_R, prandtl_root, 'b.', label='Prandtl root')
+        plt.plot(r_over_R, prandtl_tip, 'b.', label='Prandtl tip')
+        plt.plot(r_over_R, prandtl_root, 'r.', label='Prandtl root')
         color = colormap(0)
         plt.plot(r_over_R, prandtl, color=color, label=f'Prandtl TSR={tip_speed_ratio}')
     else:
@@ -45,6 +45,7 @@ def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R,
             plt.plot(r_over_R, prandtl, color=color, label=f'Prandtl TSR={tsr}')
     plt.grid()
     plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel('Prandtl correction factor [-]')
     plt.legend()
     plt.show()
 
@@ -133,11 +134,11 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         plt.figure()
         colormap = cm.get_cmap('brg', n_tsr)
         for i, TSR in enumerate(tip_speed_ratios):
-            c_t = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
+            c_n = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
             r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
 
             color = colormap(i)
-            plt.plot(r_R, c_t, color=color, label=f'TSR={TSR}')
+            plt.plot(r_R, c_n, color=color, label=f'TSR={TSR}')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_n$ [-]')
         # plt.title('Normal force coefficient vs r/R')
@@ -217,7 +218,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         plt.figure()
         alpha_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['alpha']
         alpha_uncorr = uncorrected_results['alpha']
-        plt.plot(r_R_corr, alpha_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_corr, alpha_corr, color=colormap(0), label=f'with Prandtl correction')
         plt.plot(r_R_uncorr, alpha_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$\alpha$ [deg]')
@@ -229,7 +230,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         plt.figure()
         inflow_angle_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['inflow_angle']
         inflow_angle_uncorr = uncorrected_results['inflow_angle']
-        plt.plot(r_R_corr, inflow_angle_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_corr, inflow_angle_corr, color=colormap(0), label=f'with Prandtl correction')
         plt.plot(r_R_uncorr, inflow_angle_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$\phi$ [deg]')
@@ -241,7 +242,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         plt.figure()
         a_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['a']
         a_uncorr = uncorrected_results['a']
-        plt.plot(r_R_corr, a_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_corr, a_corr, color=colormap(0), label=f'with Prandtl correction')
         plt.plot(r_R_uncorr, a_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$a$ [-]')
@@ -253,7 +254,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         plt.figure()
         a_line_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['a_line']
         a_line_uncorr = uncorrected_results['a_line']
-        plt.plot(r_R_corr, a_line_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_corr, a_line_corr, color=colormap(0), label=f'with Prandtl correction')
         plt.plot(r_R_uncorr, a_line_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r"$a'$[-]")
@@ -263,10 +264,10 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of normal loading-----------------------------------------------------
         plt.figure()
-        c_t_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
-        c_t_uncorr = uncorrected_results['normal_force']
-        plt.plot(r_R_corr, c_t_corr, color=colormap(0), label=f'with Pradtl correction')
-        plt.plot(r_R_uncorr, c_t_uncorr, color=colormap(1), label=f'without Prandtl correction')
+        c_n_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['normal_force']
+        c_n_uncorr = uncorrected_results['normal_force']
+        plt.plot(r_R_corr, c_n_corr, color=colormap(0), label=f'with Prandtl correction')
+        plt.plot(r_R_uncorr, c_n_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_n$ [-]')
         # plt.title('Normal force coefficient vs r/R')
@@ -275,10 +276,10 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of tangential loading-----------------------------------------------------
         plt.figure()
-        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force']
-        c_q_uncorr = uncorrected_results['tangential_force']
-        plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
-        plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
+        c_t_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['tangential_force']
+        c_t_uncorr = uncorrected_results['tangential_force']
+        plt.plot(r_R_corr, c_t_corr, color=colormap(0), label=f'with Prandtl correction')
+        plt.plot(r_R_uncorr, c_t_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_t$ [-]')
         # plt.title('Tangential force coefficient vs r/R')
@@ -289,7 +290,7 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
         plt.figure()
         c_T_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_thrust']
         c_T_uncorr = uncorrected_results['c_thrust']
-        plt.plot(r_R_corr, c_T_corr, color=colormap(0), label=f'with Pradtl correction')
+        plt.plot(r_R_corr, c_T_corr, color=colormap(0), label=f'with Prandtl correction')
         plt.plot(r_R_uncorr, c_T_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_T(r)$ [-]')
@@ -299,10 +300,10 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of C_Q-----------------------------------------------------
         plt.figure()
-        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_torque']
-        c_q_uncorr = uncorrected_results['c_torque']
-        plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
-        plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
+        c_Q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_torque']
+        c_Q_uncorr = uncorrected_results['c_torque']
+        plt.plot(r_R_corr, c_Q_corr, color=colormap(0), label=f'with Prandtl correction')
+        plt.plot(r_R_uncorr, c_Q_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_Q(r)$ [-]')
         # plt.title('Tangential force coefficient vs r/R')
@@ -311,10 +312,10 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, pl
 
         # ----Spanwise distribution of circulation------------------------------------------------------------------------------
         plt.figure()
-        c_q_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma']
-        c_q_uncorr = uncorrected_results['gamma']
-        plt.plot(r_R_corr, c_q_corr, color=colormap(0), label=f'with Pradtl correction')
-        plt.plot(r_R_uncorr, c_q_uncorr, color=colormap(1), label=f'without Prandtl correction')
+        gamma_corr = corrected_results[f'yaw_0.0_TSR_{TSR}']['gamma']
+        gamma_uncorr = uncorrected_results['gamma']
+        plt.plot(r_R_corr, gamma_corr, color=colormap(0), label=f'with Prandtl correction')
+        plt.plot(r_R_uncorr, gamma_uncorr, color=colormap(1), label=f'without Prandtl correction')
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$\Gamma$ [-]')
         # plt.title('Circulation vs r/R')
@@ -348,7 +349,7 @@ def plots_yawed(results, yaw_angles, r_over_R, psi, variables_to_plot, labels):
             Y = np.array(results[key][var]).T
             c = ax.contourf(Psi, R, Y, levels=30, cmap=colormap, vmin=vmin, vmax=vmax)
 
-            ax.set_title(r'$\Theta$ = ' + f'{int(yaw_angles[j])} deg', fontsize=12, pad=30)
+            ax.set_title(r'$\gamma$ = ' + f'{int(yaw_angles[j])} deg', fontsize=12, pad=30)
             ax.set_yticklabels([])
             ax.grid(True)
             cbar = fig.colorbar(c, ax=ax, orientation='horizontal', fraction=0.04, pad=0.1)
@@ -407,6 +408,143 @@ def plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor):
     plt.legend()
 
     # Display the plot
+    plt.show()
+
+    return
+
+
+def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distribution,
+                       orig_chord_distribution, orig_twist_distribution, results_orig, centroids,  r_R):
+    colormap = cm.get_cmap('brg', 2)
+
+# ----Spanwise distribution of angle of attack------------------------------------------------------------
+    plt.figure()
+    alpha_opt = results_opt['alpha']
+    alpha_orig = results_orig['alpha']
+    plt.plot(centroids, alpha_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, alpha_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$\alpha$ [deg]')
+    # plt.title('Alpha vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of inflow angle---------------------------------------------------------------
+    plt.figure()
+    inflow_angle_orig = results_orig['inflow_angle']
+    inflow_angle_opt = results_opt['inflow_angle']
+    plt.plot(centroids, inflow_angle_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, inflow_angle_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$\phi$ [deg]')
+    # plt.title('Inflow angle vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of axial induction factor-----------------------------------------------------
+    plt.figure()
+    a_orig = results_orig['a']
+    a_opt = results_opt['a']
+    plt.plot(centroids, a_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, a_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$a$ [-]')
+    # plt.title('Axial Induction Factors vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of axial induction factor-----------------------------------------------------
+    plt.figure()
+    a_line_orig = results_orig['a_line']
+    a_line_opt = results_opt['a_line']
+    plt.plot(centroids, a_line_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, a_line_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r"$a'$[-]")
+    # plt.title('Tangential Induction Factors vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of normal loading-----------------------------------------------------
+    plt.figure()
+    c_n_corr = results_opt['normal_force']
+    c_n_uncorr = results_orig['normal_force']
+    plt.plot(centroids, c_n_corr, color=colormap(0), label=f'Original')
+    plt.plot(centroids, c_n_uncorr, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$C_n$ [-]')
+    # plt.title('Normal force coefficient vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of tangential loading-----------------------------------------------------
+    plt.figure()
+    c_t_orig = results_opt['tangential_force']
+    c_t_opt = results_orig['tangential_force']
+    plt.plot(centroids, c_t_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, c_t_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$C_t$ [-]')
+    # plt.title('Tangential force coefficient vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of C_T-----------------------------------------------------
+    plt.figure()
+    c_T_orig = results_opt['c_thrust']
+    c_T_opt = results_orig['c_thrust']
+    plt.plot(centroids, c_T_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, c_T_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$C_T(r)$ [-]')
+    # plt.title('Normal force coefficient vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of C_Q-----------------------------------------------------
+    plt.figure()
+    c_Q_orig = results_opt['c_torque']
+    c_Q_opt = results_orig['c_torque']
+    plt.plot(centroids, c_Q_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, c_Q_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$C_Q(r)$ [-]')
+    # plt.title('Tangential force coefficient vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of circulation------------------------------------------------------------------------------
+    plt.figure()
+    gamma_orig = results_orig['gamma']
+    gamma_opt = results_opt['gamma']
+    plt.plot(centroids, gamma_orig, color=colormap(0), label=f'Original')
+    plt.plot(centroids, gamma_opt, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$\Gamma$ [-]')
+    # plt.title('Circulation vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of chord------------------------------------------------------------------------------
+    plt.figure()
+    plt.plot(r_R, orig_chord_distribution, color=colormap(0), label=f'Original')
+    plt.plot(r_R, opt_chord_distribution, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$C$ [m]')
+    # plt.title('Circulation vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    # ----Spanwise distribution of twist------------------------------------------------------------------------------
+    plt.figure()
+    plt.plot(r_R, orig_twist_distribution, color=colormap(0), label=f'Original')
+    plt.plot(r_R, opt_twist_distribution, color=colormap(1), label=f'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$\Theta$ [deg]')
+    # plt.title('Circulation vs r/R')
+    plt.grid(True)
+    plt.legend()
+
     plt.show()
 
     return

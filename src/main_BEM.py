@@ -3,6 +3,7 @@ from BEM_functions import *
 from BEM_plots import *
 import pandas as pd
 import os
+from blade_optimization import blade_optimization
 
 """
 
@@ -39,7 +40,11 @@ plot_polar = False    # plot the airfoil polars
 plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
 plot_yawed = False    # plot the results for the yawed case with Prandtl correction
-plot_p_tot = True    # plot the stagnation pressure distribution
+plot_p_tot = False    # plot the stagnation pressure distribution
+plot_optimization_results = True    # plot the results of the blade optimization
+
+# Flag for blade optimization
+perform_blade_optimization = True
 
 # ----Discretization -----------------------------------------------------------------------------------
 number_of_annuli = 80  # number of annuli [-]
@@ -129,11 +134,6 @@ for j, tip_speed_ratio in enumerate(tip_speed_ratios):
     CQ_corr[key] = np.sum(dr * results_corrected[key]['tangential_force'] * (0.5 * u_inf**2 * rotor_radius) * n_blades
                           / (0.5 * u_inf ** 2 * np.pi * rotor_radius ** 2))
 
-# -----Compute CT, CP, CQ for yawed corrected case------------------------------------------------------------
-# dpsi = (psi_vec[1:] - psi_vec[:-1])
-# dpsi = np.append(dpsi, dpsi[-1])
-# CT_yawed =
-
 # ----Solve BEM model for non-corrected non-yawed case TSR = 8, yaw_angle = 0---------------------------------
 results_uncorrected = BEM_cycle(
     u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[1], rotor_radius, n_blades,
@@ -147,13 +147,21 @@ v_tan = Omega[1] * results_corrected['yaw_0.0_TSR_8.0']['r_over_R'] * \
 dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
     (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] /
      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr))
-# dp_tot_behind_rotor_tan = (0.5 * u_inf**2 * rotor_radius) * \
-#     (results_corrected['yaw_0.0_TSR_8.0']['tangential_force'] /
-#      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr) * v_tan/v_norm)
-# dp_tot = dp_tot_behind_rotor_norm + dp_tot_behind_rotor_tan
+
 dp_tot = dp_tot_behind_rotor_norm
 p_tot_behind_rotor = p_tot - dp_tot
 
+# ----If requested perform blade optimization-----------------------------------------------------------------
+if perform_blade_optimization:
+    CT_ref = 0.75
+    CP_max_CT075, optim_chord_distribution, optim_twist_distribution = blade_optimization(
+        tip_location_over_R, root_location_over_R, r_over_R, rotor_radius, n_blades, pitch, u_inf, 8.0,
+        CT_ref, polar_alpha, polar_cl, polar_cd, plot_contour=True)
+    results_optim = BEM_cycle(
+        u_inf, r_over_R, root_location_over_R, tip_location_over_R, Omega[1], rotor_radius, n_blades,
+        optim_chord_distribution, optim_twist_distribution, 0.0, 8, polar_alpha, polar_cl, polar_cd)
+
+# -----Plot stagnation pressure distribution------------------------------------------------------------------
 if plot_p_tot:
     plot_polar_pressure_distribution(results_corrected['yaw_0.0_TSR_8.0']['r_over_R'], p_tot, p_tot_behind_rotor)
 
@@ -165,6 +173,7 @@ if plot_non_yawed_corrected or plot_non_yawed_comparison:
     plots_non_yawed(non_yawed_corrected_results, results_uncorrected, tip_speed_ratios,
                     plot_non_yawed_corrected, plot_non_yawed_comparison)
 
+# -----Plot results for yawed case----------------------------------------------------------------------------
 if plot_yawed:
     n_psi = len(psi_vec)
     results_yawed = {key: results_corrected[key] for key in yawed_keys}
@@ -187,5 +196,10 @@ if plot_yawed:
     labels = [r'$\alpha$ [deg]', r'$\phi$ [deg]', r'$a$ [-]', r"$a'$ [-]",
               r'$C_n$ [-]', r'$C_t$ [-]', r'$\Gamma$ [-]']
     plots_yawed(results_yawed, yaw_angles, centroids, psi_vec, variables_to_plot, labels)
+
+# -----Plot optimization results-------------------------------------------------------------------------------
+if plot_optimization_results and perform_blade_optimization:
+    plots_optimization(results_optim, optim_chord_distribution, optim_twist_distribution,
+                       chord_distribution, twist_distribution, results_corrected['yaw_0.0_TSR_8.0'], results_corrected['yaw_0.0_TSR_8.0']['r_over_R'], r_over_R)
 
 print('Done')

@@ -247,10 +247,10 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     tangential_force = tangential_force / (0.5 * u_inf**2 * rotor_R)
     gamma = gamma / (np.pi * u_inf**2 / (blades_number * omega))
 
-    if it == max_iterations:
-        print(
-            f'Annulus at r/R = {r_over_R:.2f} did not converge, current rel error is {rel_error:.2e}')
-    else:
-        print(f'Annulus at r/R = {r_over_R:.2f} converged in {it} iterations')
+    # if it == max_iterations:
+    #     print(
+    #         f'Annulus at r/R = {r_over_R:.2f} did not converge, current rel error is {rel_error:.2e}')
+    # else:
+    #     print(f'Annulus at r/R = {r_over_R:.2f} converged in {it} iterations')
 
     return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p
