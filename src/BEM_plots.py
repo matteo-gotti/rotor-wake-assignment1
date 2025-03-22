@@ -28,7 +28,7 @@ def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R,
     a = np.zeros(np.shape(r_over_R)) + 0.3
     n_tsr = 1 if type(tip_speed_ratio) is np.float64 else len(tip_speed_ratio)
     colormap = cm.get_cmap('brg', n_tsr)
-    fig = plt.figure(figsize=(12, 6))
+    fig = plt.figure(figsize=(8, 3))
 
     if n_tsr == 1:
         prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
@@ -88,7 +88,7 @@ def plot_polar_data(polar_alpha, polar_cl, polar_cd):
     return fig
 
 
-def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, polar_alpha, polar_cd, polar_cl, plot_corrected=True, plot_comparison=True):
+def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, polar_alpha, polar_cd, polar_cl, cord_distribution, plot_corrected=True, plot_comparison=True):
     n_tsr = len(tip_speed_ratios)
     # ----Spanwise distribution of angle of attack------------------------------------------------------------
 
@@ -189,6 +189,13 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, po
 
             color = colormap(i)
             plt.plot(r_R, c_T, color=color, label=f'TSR={TSR}')
+        linestyles = ['--', '-.', ':']
+        for i, TSR in enumerate(tip_speed_ratios):
+            c_T = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_thrust_check']
+            r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+
+            color = 'k'
+            plt.plot(r_R, c_T, color=color, label=f'TSR={TSR}', linestyle=linestyles[i])
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_T(r)$ [-]')
         plt.grid(True)
@@ -203,6 +210,14 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, po
 
             color = colormap(i)
             plt.plot(r_R, c_Q, color=color, label=f'TSR={TSR}')
+
+        linestyles = ['--', '-.', ':']
+        for i, TSR in enumerate(tip_speed_ratios):
+            c_T = corrected_results[f'yaw_0.0_TSR_{TSR}']['c_torque_check']
+            r_R = corrected_results[f'yaw_0.0_TSR_{TSR}']['r_over_R']
+
+            color = 'k'
+            plt.plot(r_R, c_T, color=color, label=f'TSR={TSR}', linestyle=linestyles[i])
         plt.xlabel(r'$\frac{r}{R}$ [-]')
         plt.ylabel(r'$C_Q(r)$ [-]')
         # plt.title('Tangential force coefficient vs r/R')
@@ -235,9 +250,41 @@ def plots_non_yawed(corrected_results, uncorrected_results, tip_speed_ratios, po
         plt.plot(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']
                  ['r_over_R'], efficiency, color=colormap(0))
         plt.xlabel(r'$\frac{r}{R}$ [-]')
-        plt.ylabel(r'$E [-]$')
+        plt.ylabel(r'$E$ [-]')
         # plt.title('Circulation vs r/R')
         plt.grid(True)
+
+    # ----Spanwise distribution of Cl------------------------------------------------------------------------------
+        plt.figure()
+        Cl = np.zeros_like(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']['r_over_R'])
+        for i, AoA in enumerate(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']['alpha']):
+            Cl[i] = np.interp(AoA, polar_alpha, polar_cl)
+
+        plt.plot(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']
+                 ['r_over_R'], Cl, color=colormap(0))
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$C_l$ [-]')
+        # plt.title('Circulation vs r/R')
+        plt.grid(True)
+
+    # ----Spanwise distribution of Cord------------------------------------------------------------------------------
+        plt.figure()
+        cords = np.zeros_like(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']['r_over_R'])
+        cords = (cord_distribution[1:] + cord_distribution[0:-1])/2
+        plt.plot(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']
+                 ['r_over_R'], cords, color=colormap(0), label='$c$')
+        # plt.title('Circulation vs r/R')
+
+    # ----Spanwise distribution of Cord times Cl------------------------------------------------------------------------------
+        cords = np.array(cords).reshape(-1, 1)
+        Cl = np.array(Cl)
+        plt.plot(corrected_results[f'yaw_0.0_TSR_{tip_speed_ratios[1]}']
+                 ['r_over_R'], cords[:]*Cl, color=colormap(1), label=r'$c \cdot Cl$')
+        plt.xlabel(r'$\frac{r}{R}$ [-]')
+        plt.ylabel(r'$c$ and $c C_l$ [m]')
+        # plt.title('Circulation vs r/R')
+        plt.grid(True)
+        plt.legend()
 
         plt.show()
 
@@ -448,8 +495,8 @@ def plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor):
     return
 
 
-def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distribution,
-                       orig_chord_distribution, orig_twist_distribution, results_orig, centroids,  r_R):
+def plots_optimization(results_opt, opt_cord_distribution, opt_twist_distribution,
+                       orig_cord_distribution, orig_twist_distribution, results_orig, centroids,  r_R, polar_alpha, polar_cl, polar_cd):
     colormap = cm.get_cmap('brg', 2)
 
 # ----Spanwise distribution of angle of attack------------------------------------------------------------
@@ -562,8 +609,8 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
 
     # ----Spanwise distribution of chord------------------------------------------------------------------------------
     plt.figure()
-    plt.plot(r_R, orig_chord_distribution, color=colormap(0), label=f'Original')
-    plt.plot(r_R, opt_chord_distribution, color=colormap(1), label=f'Optimized')
+    plt.plot(r_R, orig_cord_distribution, color=colormap(0), label=f'Original')
+    plt.plot(r_R, opt_cord_distribution, color=colormap(1), label=f'Optimized')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
     plt.ylabel(r'$C$ [m]')
     # plt.title('Circulation vs r/R')
@@ -579,5 +626,33 @@ def plots_optimization(results_opt, opt_chord_distribution, opt_twist_distributi
     # plt.title('Circulation vs r/R')
     plt.grid(True)
     plt.legend()
+
+# ----Spanwise distribution of Cord times Cl------------------------------------------------------------------------------
+    plt.figure()
+    orig_cords = np.zeros_like(results_orig['r_over_R'])
+    orig_cords = (orig_cord_distribution[1:] + orig_cord_distribution[0:-1])/2
+    orig_cords = np.array(orig_cords).reshape(-1, 1)
+    orig_Cl = np.zeros_like(results_orig['r_over_R'])
+    for i, AoA in enumerate(results_orig['alpha']):
+        orig_Cl[i] = np.interp(AoA, polar_alpha, polar_cl)
+    orig_Cl = np.array(orig_Cl)
+
+    opt_cords = np.zeros_like(results_opt['r_over_R'])
+    opt_cords = (opt_cord_distribution[1:] + opt_cord_distribution[0:-1])/2
+    opt_cords = np.array(opt_cords).reshape(-1, 1)
+    opt_Cl = np.zeros_like(results_opt['r_over_R'])
+    for i, AoA in enumerate(results_opt['alpha']):
+        opt_Cl[i] = np.interp(AoA, polar_alpha, polar_cl)
+    opt_Cl = np.array(opt_Cl)
+
+    plt.plot(results_orig['r_over_R'], orig_cords[:]*orig_Cl, color=colormap(0), label=r'Original')
+    plt.plot(results_opt['r_over_R'], opt_cords[:]*opt_Cl, color=colormap(1), label=r'Optimized')
+    plt.xlabel(r'$\frac{r}{R}$ [-]')
+    plt.ylabel(r'$c \cdot C_l$ [m]')
+    # plt.title('Circulation vs r/R')
+    plt.grid(True)
+    plt.legend()
+
+    plt.show()
 
     return
