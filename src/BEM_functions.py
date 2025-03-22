@@ -194,7 +194,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         elif a_corrected < 0:
             a_corrected = 0.0
 
-        a_next_it = 0.85 * a_old + 0.15 * a_corrected
+        a_next_it = 0.817 * a_old + 0.183 * a_corrected
 
         # calculate azimuthal induction
         a_line_new = tangential_force * blades_number / \
@@ -205,7 +205,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
             a_line_corrected = 0.95
         elif a_line_corrected < 0:
             a_line_corrected = 0.0
-        a_line_next_it = 0.85 * a_line_old + 0.15 * a_line_corrected
+        a_line_next_it = 0.817 * a_line_old + 0.183 * a_line_corrected
 
         # test convergence of solution, by checking convergence of axial induction
         # rel_error = max(np.abs(a_old - a_next_it)/a_old, (a_line_old - a_line_next_it)/a_line_old)
