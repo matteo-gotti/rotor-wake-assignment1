@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # ----Discretization method-----------------------------------------------------------------------------------
-number_of_annuli = np.arange(20, 400, 20)  # number of annuli [-]
+number_of_annuli = np.arange(20, 420, 20)  # number of annuli [-]
 
 # ------Define the blade geometry-----------------------------------------------------------------------------
 n_blades = 3  # number of blades [-]

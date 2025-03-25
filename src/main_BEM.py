@@ -10,9 +10,9 @@ plot_glauert = False    # plot the Glauert correction
 plot_prandtl_single_tsr = False    # plot the Prandtl correction for a single tip speed ratio
 plot_prandtl = False    # plot the Prandtl correction for all tip speed ratios
 plot_polar = False    # plot the airfoil polars
-plot_non_yawed_corrected = True    # plot the results for the non yawed case with Prandtl correction
+plot_non_yawed_corrected = False    # plot the results for the non yawed case with Prandtl correction
 plot_non_yawed_comparison = False   # plot the comparison of results with and without Prandtl correction for the non yawed case
-plot_yawed = True    # plot the results for the yawed case with Prandtl correction
+plot_yawed = False    # plot the results for the yawed case with Prandtl correction
 plot_p_tot = False    # plot the stagnation pressure distribution
 plot_optimization_results = False    # plot the results of the blade optimization
 
@@ -118,11 +118,12 @@ v_norm = u_inf * (1 - results_corrected['yaw_0.0_TSR_8.0']['a'])
 v_tan = Omega[1] * results_corrected['yaw_0.0_TSR_8.0']['r_over_R'] * \
     rotor_radius * (1 + results_corrected['yaw_0.0_TSR_8.0']['a_line'])
 dp_tot_behind_rotor_norm = (0.5 * u_inf**2 * rotor_radius) * \
-    (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] /
+    (results_corrected['yaw_0.0_TSR_8.0']['normal_force'] * n_blades * dr /
      (2*np.pi*results_corrected['yaw_0.0_TSR_8.0']['r_over_R']*rotor_radius * dr))
 
 dp_tot = dp_tot_behind_rotor_norm
-p_tot_behind_rotor = p_tot - dp_tot
+p_tot_behind_rotor = (p_tot - dp_tot)/p_tot
+p_tot = p_tot/p_tot
 
 # ----If requested perform blade optimization-----------------------------------------------------------------
 if perform_blade_optimization:

@@ -3,10 +3,6 @@ import numpy as np
 
 
 def compute_c_t(a, apply_glauert_correction=False):
-    """
-    This function calculates the thrust coefficient as a function of induction factor 'a'
-    'glauert' defines if the Glauert correction for heavily loaded rotors should be used; default value is false
-    """
     c_t = 4 * a * (1 - a)
     if apply_glauert_correction:
         CT1 = 1.816
@@ -21,10 +17,6 @@ def compute_c_t(a, apply_glauert_correction=False):
 
 
 def compute_axial_induction(c_t):
-    """
-    This function calculates the induction factor 'a' as a function of thrust coefficient CT
-    including Glauert's correction
-    """
     a = np.zeros(np.shape(c_t))
     CT1 = 1.816
     CT2 = 2 * np.sqrt(CT1) - CT1
@@ -34,10 +26,6 @@ def compute_axial_induction(c_t):
 
 
 def prandtl_tip_root_correction(r_R, root_radius_over_R, tip_radius_over_R, tip_speed_ratio, blades_number, axial_induction):
-    """
-    This function calculates the combined tip and root Prandtl correction at a given radial position 'r_R' (non-dimensioned by rotor radius),
-    given a root and tip radius (also non-dimensioned), a tip speed ratio TSR, the number of blades NBlades and the axial induction factor
-    """
     temp1 = -blades_number / 2 * (tip_radius_over_R - r_R) / r_R * np.sqrt(
         1 + ((tip_speed_ratio * r_R) ** 2) / ((1 - axial_induction) ** 2))
     f_tip = np.array(2 / np.pi * np.arccos(np.exp(temp1)))
@@ -141,16 +129,6 @@ def BEM_cycle(u_inf, r_over_R, root_radius_over_R, tip_radius_over_R, omega, rot
 
 def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radius_over_R, omega, rotor_R, blades_number,
                       chord, twist, yaw_angle, tip_speed_ratio, polar_alpha, polar_cl, polar_cd, max_iterations, psi_vec=[], prandtl_correction=True):
-    """
-    solve balance of momentum between blade element load and loading in the stream-tube
-    input variables:
-    u_inf - wind speed at infinity
-    r1_R,r2_R - edges of blade element, in fraction of Radius ;
-    root_radius_over_R, tip_radius_over_R - location of blade root and tip, in fraction of Radius ;
-    Radius is the rotor radius
-    Omega -rotational velocity
-    NBlades - number of blades in rotor
-    """
     area = np.pi * ((r2_over_R * rotor_R) ** 2 -
                     (r1_over_R * rotor_R) ** 2)  # area annulus
     r_over_R = (r1_over_R + r2_over_R) / 2  # centroid
@@ -208,8 +186,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         a_line_next_it = 0.817 * a_line_old + 0.183 * a_line_corrected
 
         # test convergence of solution, by checking convergence of axial induction
-        # rel_error = max(np.abs(a_old - a_next_it)/a_old, (a_line_old - a_line_next_it)/a_line_old)
-        rel_error = max(np.abs(a_old - a_next_it), (a_line_old - a_line_next_it))
+        rel_error = max(np.abs(a_old - a_next_it)/a_next_it, (a_line_old - a_line_next_it)/a_next_it)
         a_old = a_next_it
         a_line_old = a_line_next_it
         it += 1
@@ -238,7 +215,7 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
         dpsi = np.append(dpsi, dpsi[-1])
 
         wake_skew_angle = (0.6*a_next_it + 1) * yaw_angle
-        a_corrected = a_next_it * (1 + 2 * np.tan(wake_skew_angle/2) * r_over_R * np.sin(psi_vec))
+        a_corrected = a_next_it * (1 + 2 * np.tan(wake_skew_angle/2) * r_over_R * np.cos(psi_vec))
         a_line_corrected = a_line_next_it + 1/r_over_R * 1/tip_speed_ratio * np.sin(yaw_angle) * np.sin(psi_vec)
 
         c_t = 4 * a_corrected * np.sqrt((1 - a_corrected*(2*np.cos(yaw_angle) - a_corrected)))
@@ -256,10 +233,10 @@ def solve_stream_tube(u_inf, r1_over_R, r2_over_R, root_radius_over_R, tip_radiu
     tangential_force = tangential_force / (0.5 * u_inf**2 * rotor_R)
     gamma = gamma / (np.pi * u_inf**2 / (blades_number * omega))
 
-    # if it == max_iterations:
-    #     print(
-    #         f'Annulus at r/R = {r_over_R:.2f} did not converge, current rel error is {rel_error:.2e}')
-    # else:
-    #     print(f'Annulus at r/R = {r_over_R:.2f} converged in {it} iterations')
+    if it == max_iterations:
+        print(
+            f'Annulus at r/R = {r_over_R:.2f} did not converge, current rel error is {rel_error:.2e}')
+    else:
+        print(f'Annulus at r/R = {r_over_R:.2f} converged in {it} iterations')
 
     return a_corrected, a_line_corrected, normal_force, tangential_force, gamma, alpha, inflow_angle, c_t, c_q, c_p, c_t_check, c_q_check, c_p_check

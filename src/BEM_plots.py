@@ -28,7 +28,7 @@ def plot_prandtl_correction(r_over_R, root_location_over_R, tip_location_over_R,
     a = np.zeros(np.shape(r_over_R)) + 0.3
     n_tsr = 1 if type(tip_speed_ratio) is np.float64 else len(tip_speed_ratio)
     colormap = cm.get_cmap('brg', n_tsr)
-    fig = plt.figure(figsize=(8, 3))
+    fig = plt.figure(figsize=(6, 3))
 
     if n_tsr == 1:
         prandtl, prandtl_tip, prandtl_root = prandtl_tip_root_correction(
@@ -485,7 +485,7 @@ def plot_polar_pressure_distribution(centroids, p_tot, p_tot_behind_rotor):
     plt.plot(centroids, p_tot, 'r-', label='Total pressure in front of rotor')
     plt.plot(centroids, p_tot_behind_rotor, 'b-', label='Total pressure behind rotor')
     plt.xlabel(r'$\frac{r}{R}$ [-]')
-    plt.ylabel(r'$P_{tot}$ [Pa]')
+    plt.ylabel(r'$P_{tot}$ [-]')
     plt.grid()
     plt.legend()
 

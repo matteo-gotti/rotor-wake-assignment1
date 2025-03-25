@@ -69,10 +69,6 @@ def blade_optimization(tip_location_over_R, root_location_over_R, r_over_R, roto
 
     Z = griddata((x_data, y_data), CT_values, (X, Y), method='cubic')
     inds_CT_is_CT_ref = np.where(np.abs(Z - CT_ref) < tol)
-
-    # x_near_075 = X[ind1]
-    # y_near_075 = Y[ind1]
-
     Z2 = griddata((x_data, y_data), CP_values, (X, Y), method='cubic')
 
     CP_values_CT075 = Z2[inds_CT_is_CT_ref]
